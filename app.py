@@ -304,8 +304,8 @@ function buildRack(xPos, zPos, rotY) {
 buildRack(-7.8, -2.4, Math.PI/2); buildRack(-7.8, 2.4, Math.PI/2);
 buildRack(7.8, -2.4, -Math.PI/2); buildRack(7.8, 2.4, -Math.PI/2);
 
-const animatedParts = [];
-const humanIdles = [];
+const HUMAN_WALKERS = ['pawn', 'bishop', 'queen'];
+let activeMove = null;
 
 const mats = {
     skin: new THREE.MeshStandardMaterial({ color: 0xd99b72, roughness: 0.55 }),
@@ -345,105 +345,318 @@ function makeEuroPallet(w, l) {
     return p;
 }
 
-// BENTUK ANATOMI MANUSIA ORGANIK (Bukan Boneka / Bukan Balok)
-function buildOrganicHuman(teamMat, vestMat, helmetMat, hasGoggles, isSeated = false) {
-    const human = new THREE.Group();
+// =====================================================================
+//  MANUSIA REALISTIS: rangka sendi (rig) + mesh organik
+//  Proporsi dewasa (~7 kepala), tinggi total ±1.14 unit:
+//  telapak kaki -> lutut -> pinggul -> pinggang -> dada/bahu -> leher -> kepala
+//  Setiap segmen tubuh = 1 mesh gabungan (vertex color) supaya ringan.
+// =====================================================================
+const DIM = {
+    ankleH: 0.05, shin: 0.245, thigh: 0.255, hipX: 0.062,
+    spineUp: 0.07, shoulderX: 0.135, shoulderY: 0.28,
+    upperArm: 0.20, foreArm: 0.175
+};
+DIM.hipY = DIM.ankleH + DIM.shin + DIM.thigh;   // 0.55
 
-    if (!isSeated) {
-        [-0.09, 0.09].forEach(lx => {
-            const boot = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.16), mats.leather);
-            boot.position.set(lx, 0.04, -0.01); boot.castShadow = true; human.add(boot);
+const humanMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.72, metalness: 0.0 });
+const hardMat  = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.28, metalness: 0.2 });
 
-            // Kaki menyempit natural (calf & thigh organik)
-            const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.032, 0.44, 16), mats.cargoPants);
-            leg.position.set(lx, 0.28, 0); leg.castShadow = true; human.add(leg);
-        });
-    } else {
-        [-0.085, 0.085].forEach(lx => {
-            const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.04, 0.22, 12), mats.cargoPants);
-            thigh.rotation.x = Math.PI / 2.2; thigh.position.set(lx, 0.52, -0.08); human.add(thigh);
-            const boot = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.06, 0.14), mats.leather);
-            boot.position.set(lx, 0.3, -0.2); human.add(boot);
-        });
-    }
+const SKIN_TONES = [0xd99b72, 0xc58c5a, 0xe4b48a, 0x9a643c, 0x7a4a2b, 0xefc7a0];
+const HAIR_TONES = [0x18130f, 0x2b1d14, 0x3d2a1c, 0x0d0d0d, 0x4a3320];
 
-    const baseY = 0.52;
-    const pelvis = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.1, 0.12, 16), mats.cargoPants);
-    pelvis.position.set(0, baseY, 0); human.add(pelvis);
+const _geoCache = {};
+function cached(key, make) { return _geoCache[key] || (_geoCache[key] = make()); }
+const sphG = () => cached('sph', () => new THREE.SphereGeometry(1, 14, 10));
+const boxG = () => cached('box', () => new THREE.BoxGeometry(1, 1, 1));
 
-    const upperBody = new THREE.Group();
-    upperBody.position.set(0, baseY + 0.08, 0);
-    human.add(upperBody);
+const ellP   = (color, pos, scale, rot) => ({ geo: sphG(), color, pos, scale, rot });
+const boxP   = (color, pos, scale, rot) => ({ geo: boxG(), color, pos, scale, rot });
+const cylP   = (color, pos, rt, rb, h, rot, scale) => ({ geo: cached(`cyl${rt}_${rb}_${h}`, () => new THREE.CylinderGeometry(rt, rb, h, 14, 1)), color, pos, rot, scale });
+const torusP = (color, pos, R, tube, rot, scale) => ({ geo: cached(`tor${R}_${tube}`, () => new THREE.TorusGeometry(R, tube, 6, 24)), color, pos, rot, scale });
+const latheP = (key, color, pos, pts, scale, rot) => ({
+    geo: cached('lat' + key, () => new THREE.LatheGeometry(pts.map(([r, y]) => new THREE.Vector2(r, y)), 16)),
+    color, pos, scale, rot
+});
 
-    // Torso Organik (Bahu melengkung, dada bidang)
-    const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.11, 0.35, 16), teamMat);
-    torso.position.set(0, 0.17, 0); torso.castShadow = true; upperBody.add(torso);
-
-    const vest = new THREE.Mesh(new THREE.CylinderGeometry(0.146, 0.116, 0.32, 16), vestMat);
-    vest.position.set(0, 0.17, 0); vest.castShadow = true; upperBody.add(vest);
-
-    [0.08, 0.19].forEach(sy => {
-        const hStrip = new THREE.Mesh(new THREE.CylinderGeometry(0.148, 0.12, 0.024, 16), mats.silverReflective);
-        hStrip.position.set(0, sy, 0); upperBody.add(hStrip);
-    });
-
-    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.05, 0.08, 14), mats.skin);
-    neck.position.set(0, 0.37, 0); upperBody.add(neck);
-
-    const headGroup = new THREE.Group();
-    headGroup.position.set(0, 0.46, 0);
-    upperBody.add(headGroup);
-
-    // KEPALA ALAMI (Bentuk Oval/Lonjong dengan Dagu & Rahang Nyata, Bukan Bola Kaku)
-    const skull = new THREE.Mesh(new THREE.SphereGeometry(0.1, 20, 20), mats.skin);
-    skull.scale.set(0.9, 1.15, 1.0); skull.castShadow = true; headGroup.add(skull);
-
-    // Rambut Asli di Kepala
-    const hair = new THREE.Mesh(new THREE.SphereGeometry(0.102, 16, 12, 0, Math.PI*2, 0, Math.PI*0.5), mats.hair);
-    hair.position.set(0, 0.03, -0.01); headGroup.add(hair);
-
-    const nose = new THREE.Mesh(new THREE.ConeGeometry(0.015, 0.035, 8), mats.skin);
-    nose.rotation.x = -Math.PI / 2; nose.position.set(0, -0.01, -0.1); headGroup.add(nose);
-
-    if (hasGoggles) {
-        const goggles = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.04, 0.06), mats.visorGlass);
-        goggles.position.set(0, 0.01, -0.08); headGroup.add(goggles);
-    }
-
-    // HELM SAFETY OSHA
-    const helmet = new THREE.Mesh(new THREE.SphereGeometry(0.118, 18, 14, 0, Math.PI*2, 0, Math.PI*0.55), helmetMat);
-    helmet.position.set(0, 0.03, 0); helmet.castShadow = true; headGroup.add(helmet);
-    const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.125, 0.13, 0.015, 18), helmetMat);
-    brim.position.set(0, 0.03, -0.02); headGroup.add(brim);
-
-    humanIdles.push({ upperBody, headGroup, baseY: baseY + 0.08, phase: Math.random() * Math.PI * 2 });
-    return { root: human, upperBody, headGroup };
+// profil anggota badan: prof = [[t(0 atas -> 1 bawah), radius], ...]
+function limbPts(len, prof, capped = true) {
+    const pts = [];
+    if (capped) pts.push([0, -len]);
+    for (let i = prof.length - 1; i >= 0; i--) pts.push([prof[i][1], -prof[i][0] * len]);
+    if (capped) pts.push([0, 0]);
+    return pts;
 }
 
-function attachOrganicArm(upperBody, side, sRotX, sRotZ, eRotX, teamMat) {
-    const sGroup = new THREE.Group();
-    sGroup.position.set(side * 0.16, 0.28, 0);
-    sGroup.rotation.set(sRotX, 0, sRotZ);
-    upperBody.add(sGroup);
+function mergeParts(parts) {
+    const pos = [], nor = [], col = [], idx = [];
+    let base = 0;
+    const q = new THREE.Quaternion(), e = new THREE.Euler(), mtx = new THREE.Matrix4(), c = new THREE.Color();
+    parts.forEach(p => {
+        const g = p.geo.clone();
+        const r = p.rot || [0, 0, 0], s = p.scale || [1, 1, 1], t = p.pos || [0, 0, 0];
+        e.set(r[0], r[1], r[2]); q.setFromEuler(e);
+        mtx.compose(new THREE.Vector3(t[0], t[1], t[2]), q, new THREE.Vector3(s[0], s[1], s[2]));
+        g.applyMatrix4(mtx);
+        const pa = g.attributes.position, na = g.attributes.normal;
+        c.set(p.color);
+        for (let i = 0; i < pa.count; i++) {
+            pos.push(pa.getX(i), pa.getY(i), pa.getZ(i));
+            nor.push(na.getX(i), na.getY(i), na.getZ(i));
+            col.push(c.r, c.g, c.b);
+        }
+        const ia = g.index;
+        for (let i = 0; i < ia.count; i++) idx.push(ia.getX(i) + base);
+        base += pa.count;
+        g.dispose();
+    });
+    const out = new THREE.BufferGeometry();
+    out.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    out.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+    out.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+    out.setIndex(idx);
+    return out;
+}
 
-    const shoulder = new THREE.Mesh(new THREE.SphereGeometry(0.042, 12, 12), teamMat);
-    sGroup.add(shoulder);
+function makeMesh(parts, mat) {
+    const m = new THREE.Mesh(mergeParts(parts), mat);
+    m.castShadow = true;
+    return m;
+}
 
-    // Lengan atas & bawah organik
-    const upperArm = new THREE.Mesh(new THREE.CylinderGeometry(0.036, 0.03, 0.18, 12), teamMat);
-    upperArm.position.set(0, -0.09, 0); upperArm.castShadow = true; sGroup.add(upperArm);
+function buildHuman(o) {
+    const sk = o.skin, hr = o.hair, shirt = o.shirt, pantsC = o.pants || 0x1e293b;
+    const bootC = 0x1c1917, silver = 0xcbd5e1;
+    const lipC = new THREE.Color(sk).lerp(new THREE.Color(0x8a2f2f), 0.5).getHex();
 
-    const eGroup = new THREE.Group();
-    eGroup.position.set(0, -0.18, 0); eGroup.rotation.x = eRotX;
-    sGroup.add(eGroup);
+    const rig = {
+        root: new THREE.Group(), legs: [], arms: [],
+        seated: false, canWalk: false, carry: false,
+        phase: Math.random() * 6.28, k: 0, amp: 0.6, ip: Math.random() * 6.28
+    };
 
-    const forearm = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.025, 0.17, 12), mats.skin);
-    forearm.position.set(0, -0.085, 0); forearm.castShadow = true; eGroup.add(forearm);
+    const hips = new THREE.Group(); hips.position.y = DIM.hipY; rig.root.add(hips);
+    const spine = new THREE.Group(); spine.position.y = DIM.spineUp; hips.add(spine);
+    const head = new THREE.Group(); head.position.set(0, 0.435, -0.006); spine.add(head);
+    rig.hips = hips; rig.spine = spine; rig.head = head;
 
-    const hand = new THREE.Mesh(new THREE.SphereGeometry(0.032, 10, 10), mats.leather);
-    hand.scale.set(0.8, 1.1, 1.2); hand.position.set(0, -0.18, 0); eGroup.add(hand);
+    // ---------------- PANGGUL ----------------
+    const pelvisParts = [
+        latheP('pelvis', pantsC, [0, 0, 0],
+            [[0, -0.1], [0.07, -0.095], [0.1, -0.075], [0.113, -0.035], [0.113, 0], [0.105, 0.035], [0.095, 0.062], [0.09, 0.068], [0, 0.07]],
+            [1, 1, 0.66]),
+        cylP(0x1c1917, [0, 0.05, 0], 0.104, 0.106, 0.024, null, [1, 1, 0.68]),      // ikat pinggang
+        boxP(0x9ca3af, [0, 0.05, -0.0735], [0.024, 0.018, 0.006])                    // gesper
+    ];
+    hips.add(makeMesh(pelvisParts, humanMat));
 
-    return { sGroup, eGroup };
+    // ---------------- TORSO (dada bidang, pinggang ramping, bahu) ----------------
+    const torsoParts = [
+        latheP('torso', shirt, [0, 0, 0],
+            [[0, -0.012], [0.086, -0.012], [0.086, 0.04], [0.092, 0.1], [0.1, 0.17], [0.107, 0.225], [0.108, 0.26],
+             [0.101, 0.29], [0.082, 0.31], [0.055, 0.325], [0.04, 0.333], [0, 0.335]],
+            [1, 1, 0.68]),
+        ellP(shirt, [0, 0.283, 0.004], [0.125, 0.04, 0.058]),                        // otot trapezius / garis bahu
+        torusP(shirt, [0, 0.318, 0.004], 0.046, 0.011, [Math.PI / 2, 0, 0])          // kerah
+    ];
+    if (o.vest) {
+        torsoParts.push(
+            latheP('vest', o.vest, [0, 0, 0],
+                [[0.097, 0.03], [0.1, 0.1], [0.108, 0.17], [0.115, 0.225], [0.116, 0.26], [0.109, 0.29], [0.092, 0.306]],
+                [1, 1, 0.68]),
+            torusP(silver, [0, 0.095, 0], 0.1015, 0.0045, [Math.PI / 2, 0, 0], [1, 0.68, 1]),
+            torusP(silver, [0, 0.19, 0], 0.1115, 0.0045, [Math.PI / 2, 0, 0], [1, 0.68, 1]),
+            boxP(silver, [-0.048, 0.2, -0.066], [0.022, 0.19, 0.014]),
+            boxP(silver, [0.048, 0.2, -0.066], [0.022, 0.19, 0.014]),
+            boxP(silver, [-0.048, 0.2, 0.066], [0.022, 0.19, 0.014]),
+            boxP(silver, [0.048, 0.2, 0.066], [0.022, 0.19, 0.014])
+        );
+    }
+    spine.add(makeMesh(torsoParts, humanMat));
+
+    // ---------------- KEPALA (leher, tengkorak, rahang, telinga, hidung, mata, alis, bibir, rambut) ----------------
+    const fz = (x, y) => -0.066 * Math.sqrt(Math.max(0.05, 1 - (x / 0.056) ** 2 - (y / 0.083) ** 2));
+    const headParts = [
+        cylP(sk, [0, -0.10, 0.004], 0.04, 0.046, 0.12),                              // leher
+        ellP(sk, [0, 0, 0], [0.056, 0.083, 0.066]),                                  // tengkorak
+        ellP(sk, [0, -0.045, -0.012], [0.045, 0.04, 0.052]),                         // rahang
+        ellP(sk, [0, -0.07, -0.032], [0.024, 0.017, 0.021]),                         // dagu
+        ellP(sk, [-0.055, -0.004, 0.008], [0.008, 0.022, 0.014]),                    // telinga kiri
+        ellP(sk, [0.055, -0.004, 0.008], [0.008, 0.022, 0.014]),                     // telinga kanan
+        ellP(sk, [0, -0.002, -0.061], [0.008, 0.02, 0.011], [0.25, 0, 0]),           // tulang hidung
+        ellP(sk, [0, -0.022, -0.068], [0.012, 0.011, 0.012]),                        // ujung hidung
+        ellP(sk, [-0.009, -0.025, -0.063], [0.007, 0.007, 0.008]),
+        ellP(sk, [0.009, -0.025, -0.063], [0.007, 0.007, 0.008]),
+        ellP(lipC, [0, -0.037, fz(0, -0.037) + 0.002], [0.018, 0.0045, 0.006]),      // bibir atas
+        ellP(lipC, [0, -0.045, fz(0, -0.045) + 0.002], [0.014, 0.0045, 0.005]),      // bibir bawah
+        { geo: cached('hair', () => new THREE.SphereGeometry(1, 14, 10, 0, Math.PI, 0, Math.PI * 0.64)), color: hr, pos: [0, 0.002, 0.004], scale: [0.059, 0.087, 0.07] }
+    ];
+    [-1, 1].forEach(s => {
+        headParts.push(
+            ellP(0xf4f1ea, [s * 0.021, 0.016, fz(s * 0.021, 0.016) + 0.002], [0.0105, 0.0075, 0.006]),   // putih mata
+            ellP(0x2b1a10, [s * 0.021, 0.016, fz(s * 0.021, 0.016) - 0.002], [0.0052, 0.0052, 0.0035]),  // iris
+            boxP(hr, [s * 0.022, 0.035, fz(s * 0.022, 0.035) + 0.001], [0.03, 0.006, 0.006], [0, 0, -s * 0.08])  // alis
+        );
+    });
+    head.add(makeMesh(headParts, humanMat));
+
+    // helm keselamatan (+ kacamata pelindung bila ada)
+    const helmParts = [
+        { geo: cached('dome', () => new THREE.SphereGeometry(1, 16, 8, 0, Math.PI * 2, 0, Math.PI * 0.5)), color: o.helmet, pos: [0, 0.046, -0.002], scale: [0.066, 0.062, 0.078] },
+        cylP(o.helmet, [0, 0.045, -0.004], 1, 1, 0.008, null, [0.07, 1, 0.082]),
+        boxP(o.helmet, [0, 0.043, -0.088], [0.07, 0.006, 0.03], [-0.18, 0, 0]),
+        ellP(o.helmet, [0, 0.1, -0.004], [0.011, 0.01, 0.062])
+    ];
+    if (o.goggles) {
+        helmParts.push(
+            ellP(0x0f172a, [0, 0.016, -0.066], [0.054, 0.023, 0.0105]),
+            ellP(0x38bdf8, [0, 0.016, -0.0685], [0.047, 0.017, 0.0105]),
+            torusP(0x0f172a, [0, 0.016, 0.0], 1, 0.075, [Math.PI / 2, 0, 0], [0.057, 0.066, 0.057])
+        );
+    }
+    head.add(makeMesh(helmParts, hardMat));
+
+    // ---------------- KAKI ----------------
+    [-1, 1].forEach(side => {
+        const hipJ = new THREE.Group(); hipJ.position.set(side * DIM.hipX, 0, 0); hips.add(hipJ);
+        hipJ.add(makeMesh([
+            ellP(pantsC, [0, 0, 0], [0.054, 0.054, 0.058]),
+            latheP('thigh', pantsC, [0, 0, 0], limbPts(DIM.thigh, [[0, 0.05], [0.12, 0.058], [0.35, 0.056], [0.7, 0.046], [1, 0.036]])),
+            boxP(0x2a3850, [side * 0.056, -0.12, 0], [0.014, 0.075, 0.06])               // saku cargo
+        ], humanMat));
+
+        const kneeJ = new THREE.Group(); kneeJ.position.y = -DIM.thigh; hipJ.add(kneeJ);
+        kneeJ.add(makeMesh([
+            ellP(pantsC, [0, 0, 0], [0.036, 0.038, 0.038]),                              // lutut
+            latheP('shin', pantsC, [0, 0, 0], limbPts(DIM.shin, [[0, 0.034], [0.15, 0.038], [0.3, 0.039], [0.55, 0.032], [0.8, 0.028], [0.9, 0.031], [1, 0.03]])),
+            cylP(bootC, [0, -DIM.shin + 0.03, 0], 0.034, 0.032, 0.1)                     // betis sepatu bot
+        ], humanMat));
+
+        const ankleJ = new THREE.Group(); ankleJ.position.y = -DIM.shin; kneeJ.add(ankleJ);
+        ankleJ.add(makeMesh([
+            ellP(bootC, [0, -0.018, -0.04], [0.034, 0.03, 0.088]),
+            ellP(bootC, [0, -0.024, -0.095], [0.03, 0.024, 0.05]),
+            ellP(bootC, [0, -0.025, 0.03], [0.03, 0.025, 0.035]),
+            boxP(0x0d0d0d, [0, -0.0455, -0.035], [0.068, 0.009, 0.19])                   // sol
+        ], humanMat));
+
+        rig.legs.push({ side, hip: hipJ, knee: kneeJ, ankle: ankleJ });
+    });
+
+    // ---------------- LENGAN ----------------
+    [-1, 1].forEach(side => {
+        const sJ = new THREE.Group(); sJ.position.set(side * DIM.shoulderX, DIM.shoulderY, 0); spine.add(sJ);
+        sJ.add(makeMesh([
+            ellP(shirt, [0, 0, 0], [0.043, 0.047, 0.045]),                               // otot deltoid
+            latheP('uarm', sk, [0, 0, 0], limbPts(DIM.upperArm, [[0, 0.03], [0.2, 0.034], [0.45, 0.033], [0.8, 0.026], [1, 0.023]])),
+            latheP('sleeve', shirt, [0, 0, 0], limbPts(0.115, [[0, 0.037], [0.3, 0.038], [1, 0.042]], false))   // lengan baju pendek
+        ], humanMat));
+
+        const eJ = new THREE.Group(); eJ.position.y = -DIM.upperArm; sJ.add(eJ);
+        eJ.add(makeMesh([
+            ellP(sk, [0, 0, 0], [0.025, 0.025, 0.025]),                                  // siku
+            latheP('farm', sk, [0, 0, 0], limbPts(DIM.foreArm, [[0, 0.025], [0.2, 0.027], [0.5, 0.022], [1, 0.016]]))
+        ], humanMat));
+
+        const wJ = new THREE.Group(); wJ.position.y = -DIM.foreArm; eJ.add(wJ);
+        wJ.add(makeMesh([
+            ellP(sk, [0, -0.034, 0], [0.012, 0.034, 0.028]),                                                       // telapak
+            ellP(sk, [-side * 0.01, -0.075, 0], [0.011, 0.03, 0.026], [0, 0, -side * 0.35]),                       // 4 jari menekuk
+            ellP(sk, [-side * 0.014, -0.04, -0.026], [0.009, 0.026, 0.011], [0.5, 0, -side * 0.15])                // ibu jari
+        ], humanMat));
+
+        rig.arms.push({ side, shoulder: sJ, elbow: eJ, wrist: wJ, hand: wJ, base: { x: 0.04, z: side * 0.07, e: 0.14 }, swing: true });
+    });
+
+    return rig;
+}
+
+function setArm(rig, side, x, z, e, swing) {
+    const a = rig.arms.find(a => a.side === side);
+    a.base = { x, z: side * z, e };
+    a.swing = swing;
+    return a;
+}
+
+function setSeated(rig) {
+    rig.seated = true;
+    rig.hips.position.y = DIM.shin + DIM.ankleH;
+    rig.legs.forEach(l => { l.hip.rotation.x = 1.5; l.knee.rotation.x = -1.5; l.ankle.rotation.x = 0; });
+}
+
+// Pose per-frame: berdiri diam (napas, menoleh) <-> berjalan (siklus langkah penuh)
+function poseHuman(rig, t) {
+    const k = rig.k, idle = 1 - k, ph = rig.phase;
+    const ampS = Math.min(1, 0.45 + rig.amp);
+    const breathe = Math.sin(t * 1.9 + rig.ip);
+
+    if (rig.seated) {
+        rig.spine.position.y = DIM.spineUp + breathe * 0.0015;
+        rig.head.rotation.y = Math.sin(t * 0.6 + rig.ip) * 0.22;
+    } else {
+        let hipH = 0;
+        for (const leg of rig.legs) {
+            const p = ph + (leg.side > 0 ? 0 : Math.PI);          // kaki kiri berlawanan fase
+            const sp = Math.sin(p), cp = Math.cos(p);
+            const h = rig.amp * sp * k;                           // ayunan paha (+ = maju)
+            const swingW = Math.pow(Math.max(0, Math.cos(p + 0.5)), 1.2);
+            const flex = k * (0.07 + 0.95 * ampS * swingW);       // lutut menekuk saat kaki terayun
+            const toeOff = k * 0.5 * Math.max(0, -sp) * Math.sqrt(Math.max(0, -cp));  // tumit terangkat saat mendorong
+            const ankle = (flex - h) - 0.9 * toeOff;              // telapak tetap rata ke lantai
+            leg.hip.rotation.x = h;
+            leg.knee.rotation.x = -flex;
+            leg.ankle.rotation.x = ankle;
+
+            // tinggi panggul dihitung dari kaki terendah -> kaki selalu menapak, TIDAK melayang / meloncat
+            const psi = -0.9 * toeOff;
+            const sinp = Math.sin(psi), cosp = Math.cos(psi);
+            const yToe = -0.05 * cosp + 0.135 * sinp;
+            const yHeel = -0.05 * cosp - 0.05 * sinp;
+            const need = DIM.thigh * Math.cos(h) + DIM.shin * Math.cos(h - flex) - Math.min(yToe, yHeel);
+            if (need > hipH) hipH = need;
+        }
+        rig.hips.position.y = hipH;
+        rig.hips.position.x = -0.012 * Math.cos(ph) * k;          // pindah bobot ke kaki tumpu
+        rig.hips.rotation.y = 0.11 * ampS * Math.sin(ph) * k;     // panggul berputar
+        const tw = rig.carry ? 0.3 : 1;
+        rig.spine.rotation.y = -0.19 * ampS * Math.sin(ph) * k * tw;   // dada berlawanan arah panggul
+        rig.spine.rotation.x = -0.05 * k + breathe * 0.008 * idle;
+        rig.spine.position.y = DIM.spineUp + breathe * 0.0015;
+        rig.head.rotation.y = -(rig.hips.rotation.y + rig.spine.rotation.y) * 0.85 + Math.sin(t * 0.7 + rig.ip) * 0.22 * idle;
+        rig.head.rotation.x = 0.05 * k + Math.sin(t * 0.5 + rig.ip) * 0.03 * idle;
+    }
+
+    for (const arm of rig.arms) {
+        let sw = 0, el = 0;
+        if (arm.swing && !rig.seated) {
+            const s = Math.sin(ph + (arm.side > 0 ? 0 : Math.PI));    // fase kaki sisi yang sama
+            sw = -rig.amp * 0.8 * s * k;                              // lengan berayun berlawanan dgn kaki
+            el = k * (0.28 + 0.3 * Math.max(0, -s));
+        }
+        const micro = (arm.swing && !rig.seated) ? breathe * 0.012 * idle : 0;
+        arm.shoulder.rotation.set(arm.base.x + sw + micro, 0, arm.base.z);
+        arm.elbow.rotation.x = arm.base.e + el;
+    }
+}
+
+// =====================================================================
+//  PEMBUAT UNIT
+// =====================================================================
+function humanStyle(team, extra) {
+    const isBlue = team === 'blue';
+    return Object.assign({
+        skin: SKIN_TONES[Math.floor(Math.random() * SKIN_TONES.length)],
+        hair: HAIR_TONES[Math.floor(Math.random() * HAIR_TONES.length)],
+        shirt: isBlue ? 0x0369a1 : 0xc2410c,
+        vest: isBlue ? 0x84cc16 : 0xea580c,
+        helmet: isBlue ? 0x0ea5e9 : 0xf59e0b,
+        goggles: false
+    }, extra || {});
+}
+
+function boxMesh(w, h, d, mat, x, y, z, cast = true) {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+    m.position.set(x, y, z); m.castShadow = cast;
+    return m;
 }
 
 function createUnitMesh(type, team) {
@@ -451,84 +664,123 @@ function createUnitMesh(type, team) {
     const isBlue = team === 'blue';
     const teamPrimary = new THREE.MeshStandardMaterial({ color: isBlue ? 0x0369a1 : 0xc2410c, roughness: 0.4 });
     const teamAccent = new THREE.MeshStandardMaterial({ color: isBlue ? 0x0ea5e9 : 0xf59e0b, roughness: 0.35 });
-    const vestMat = isBlue ? mats.hiVisLime : mats.hiVisOrange;
+
+    root.userData.rigs = [];
+    root.userData.wheels = [];
+    root.rotation.y = isBlue ? 0 : Math.PI;      // arah hadap awal (biru ke -Z, oranye ke +Z)
 
     const baseRing = new THREE.Mesh(new THREE.TorusGeometry(0.46, 0.016, 10, 32), teamAccent);
     baseRing.rotation.x = Math.PI / 2; baseRing.position.y = 0.015; root.add(baseRing);
 
     const dir = new THREE.Group();
-    dir.rotation.y = isBlue ? 0 : Math.PI;
     root.add(dir);
 
+    const addRig = (r) => { root.userData.rigs.push(r); return r; };
+    const addWheel = (g, r) => root.userData.wheels.push({ g, r });
+
     if (type === 'pawn') {
-        const { root: fig, upperBody } = buildOrganicHuman(teamPrimary, vestMat, teamAccent, false, false);
-        dir.add(fig);
-        attachOrganicArm(upperBody, -1, 0.65, -0.15, 1.05, teamPrimary);
-        attachOrganicArm(upperBody, 1, 0.65, 0.15, 1.05, teamPrimary);
+        // Operator picker: membawa kardus dengan kedua tangan
+        const rig = addRig(buildHuman(humanStyle(team)));
+        rig.canWalk = true; rig.carry = true;
+        setArm(rig, -1, 0.2, 0.06, 1.6, false);
+        setArm(rig, 1, 0.2, 0.06, 1.6, false);
+        rig.spine.add(boxMesh(0.27, 0.2, 0.24, mats.cardboard, 0, 0.15, -0.205));
+        dir.add(rig.root);
 
-        const box = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.22, 0.26), mats.cardboard);
-        box.position.set(0, 0.13, -0.24); box.castShadow = true; upperBody.add(box);
     } else if (type === 'rook') {
-        const wFL = makeDetailedWheel(0.14, 0.09, teamAccent); wFL.position.set(-0.28, 0.14, -0.22); dir.add(wFL);
-        const wFR = makeDetailedWheel(0.14, 0.09, teamAccent); wFR.position.set(0.28, 0.14, -0.22); dir.add(wFR);
-        const wBL = makeDetailedWheel(0.1, 0.08, teamAccent); wBL.position.set(-0.25, 0.1, 0.28); dir.add(wBL);
-        const wBR = makeDetailedWheel(0.1, 0.08, teamAccent); wBR.position.set(0.25, 0.1, 0.28); dir.add(wBR);
+        [[-0.28, 0.14, -0.22, 0.14, 0.09], [0.28, 0.14, -0.22, 0.14, 0.09], [-0.25, 0.1, 0.28, 0.1, 0.08], [0.25, 0.1, 0.28, 0.1, 0.08]]
+            .forEach(([x, y, z, r, w]) => { const wh = makeDetailedWheel(r, w, teamAccent); wh.position.set(x, y, z); dir.add(wh); addWheel(wh, r); });
 
-        const chassis = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.15, 0.68), mats.blackSteel);
-        chassis.position.set(0, 0.16, 0.04); chassis.castShadow = true; dir.add(chassis);
+        dir.add(boxMesh(0.48, 0.15, 0.68, mats.blackSteel, 0, 0.16, 0.04));            // sasis
+        dir.add(boxMesh(0.46, 0.16, 0.14, mats.blackSteel, 0, 0.2, 0.44));             // counterweight
+        dir.add(boxMesh(0.3, 0.17, 0.29, mats.leather, 0, 0.32, 0.055));               // dudukan
+        dir.add(boxMesh(0.28, 0.24, 0.05, mats.leather, 0, 0.53, 0.2));                // sandaran
 
-        const driver = buildOrganicHuman(teamPrimary, vestMat, teamAccent, true, true);
-        driver.root.scale.set(0.74, 0.74, 0.74);
-        driver.root.position.set(0, 0.06, 0.06);
-        attachOrganicArm(driver.upperBody, -1, 0.85, -0.1, 0.65, teamPrimary);
-        attachOrganicArm(driver.upperBody, 1, 0.85, 0.1, 0.65, teamPrimary);
+        const driver = addRig(buildHuman(humanStyle(team, { goggles: true })));
+        setSeated(driver);
+        setArm(driver, -1, 0.8, 0.03, 0.9, false);
+        setArm(driver, 1, 0.8, 0.03, 0.9, false);
+        driver.root.scale.setScalar(0.74);
+        driver.root.position.set(0, 0.235, 0.06);
         dir.add(driver.root);
 
-        [-0.22, 0.22].forEach(px => {
+        const wheel = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.012, 8, 20), mats.blackSteel);
+        wheel.position.set(0, 0.63, -0.19); wheel.rotation.x = -0.9; dir.add(wheel);
+        dir.add(boxMesh(0.03, 0.3, 0.03, mats.blackSteel, 0, 0.42, -0.2));
+
+        [[-0.22, 0.22], [0.22, 0.22], [-0.22, -0.18], [0.22, -0.18]].forEach(([px, pz]) => {
             const post = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.6, 10), mats.blackSteel);
-            post.position.set(px, 0.7, 0.22); dir.add(post);
+            post.position.set(px, 0.7, pz); dir.add(post);
         });
-        const roof = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.035, 0.48), mats.blackSteel);
-        roof.position.set(0, 1.02, 0.02); dir.add(roof);
+        dir.add(boxMesh(0.48, 0.035, 0.48, mats.blackSteel, 0, 1.02, 0.02));
+        [-0.13, 0.13].forEach(mx => dir.add(boxMesh(0.04, 0.9, 0.04, mats.blackSteel, mx, 0.5, -0.33)));   // tiang mast
+        dir.add(boxMesh(0.4, 0.2, 0.03, mats.blackSteel, 0, 0.2, -0.36));
+        [-0.14, 0.14].forEach(mx => dir.add(boxMesh(0.05, 0.025, 0.4, mats.chrome, mx, 0.1, -0.52)));     // garpu
 
-        [-0.14, 0.14].forEach(mx => {
-            const fork = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.025, 0.4), mats.chrome);
-            fork.position.set(mx, 0.1, -0.52); dir.add(fork);
-        });
     } else if (type === 'knight') {
-        const body = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.26), teamPrimary);
-        body.position.set(0, 0.25, 0.08); dir.add(body);
+        dir.add(boxMesh(0.4, 0.4, 0.26, teamPrimary, 0, 0.25, 0.08));
+        [[-0.2, 0.08, -0.18, 0.08], [0.2, 0.08, -0.18, 0.08], [-0.12, 0.07, 0.2, 0.07], [0.12, 0.07, 0.2, 0.07]].forEach(([x, y, z, r]) => {
+            const wh = makeDetailedWheel(r, 0.07, teamAccent); wh.position.set(x, y, z); dir.add(wh); addWheel(wh, r);
+        });
+        [-0.17, 0.17].forEach(mx => dir.add(boxMesh(0.03, 0.75, 0.03, mats.blackSteel, mx, 0.425, -0.03)));  // mast reach truck
+        dir.add(boxMesh(0.34, 0.04, 0.3, mats.blackSteel, 0, 0.06, 0.34));                                    // pijakan operator
+        dir.add(boxMesh(0.02, 0.15, 0.02, mats.blackSteel, 0, 0.525, 0.047));                                 // tiang kemudi
+        dir.add(boxMesh(0.28, 0.025, 0.025, mats.blackSteel, 0, 0.6, 0.047));                                 // stang kemudi
 
-        const rider = buildOrganicHuman(teamPrimary, vestMat, teamAccent, false, false);
-        rider.root.scale.set(0.75, 0.75, 0.75);
+        const rider = addRig(buildHuman(humanStyle(team)));
+        setArm(rider, -1, 0.7, 0.05, 0.5, false);
+        setArm(rider, 1, 0.7, 0.05, 0.5, false);
+        rider.root.scale.setScalar(0.78);
         rider.root.position.set(0, 0.08, 0.3);
-        attachOrganicArm(rider.upperBody, -1, 0.7, -0.1, 0.5, teamPrimary);
-        attachOrganicArm(rider.upperBody, 1, 0.7, 0.1, 0.5, teamPrimary);
         dir.add(rider.root);
 
         const pallet = makeEuroPallet(0.44, 0.42);
         pallet.position.set(0, 0.04, -0.24); dir.add(pallet);
-        const b1 = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.22, 0.36), mats.cardboard);
-        b1.position.set(0, 0.2, -0.24); b1.castShadow = true; dir.add(b1);
+        dir.add(boxMesh(0.38, 0.22, 0.36, mats.cardboard, 0, 0.2, -0.24));
+
     } else if (type === 'bishop') {
-        const { root: fig, upperBody } = buildOrganicHuman(teamPrimary, vestMat, mats.whiteHelmet, true, false);
-        dir.add(fig);
-        attachOrganicArm(upperBody, -1, 0.45, 0.1, 0.95, teamPrimary);
-        attachOrganicArm(upperBody, 1, 0.85, -0.05, 0.65, teamPrimary);
+        // QC Auditor: tangan kanan memegang laser scanner, tangan kiri berayun
+        const rig = addRig(buildHuman(humanStyle(team, { helmet: 0xf1f5f9, goggles: true })));
+        rig.canWalk = true;
+        const hold = setArm(rig, 1, 0.55, 0.05, 1.1, false);
+        setArm(rig, -1, 0.04, 0.07, 0.15, true);
+        const scanner = new THREE.Group();
+        scanner.add(boxMesh(0.04, 0.1, 0.05, mats.blackSteel, 0, -0.1, 0, false));
+        scanner.add(boxMesh(0.028, 0.045, 0.034, mats.blackSteel, 0, -0.07, 0.04, false));
+        const tip = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.012, 10),
+            new THREE.MeshStandardMaterial({ color: 0xef4444, emissive: 0xef4444, emissiveIntensity: 1.2 }));
+        tip.position.set(0, -0.156, 0); scanner.add(tip);
+        const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.0025, 0.0025, 0.35, 6),
+            new THREE.MeshBasicMaterial({ color: 0xff2a2a, transparent: true, opacity: 0.55 }));
+        beam.position.set(0, -0.34, 0); scanner.add(beam);
+        hold.hand.add(scanner);
+        dir.add(rig.root);
+
     } else if (type === 'queen') {
-        const { root: fig, upperBody } = buildOrganicHuman(teamPrimary, mats.blackSteel, mats.goldHelmet, true, false);
-        fig.scale.set(1.04, 1.04, 1.04); dir.add(fig);
-        attachOrganicArm(upperBody, -1, 0.55, -0.1, 1.1, teamPrimary);
-        attachOrganicArm(upperBody, 1, 0.4, 0.15, 0.9, teamPrimary);
+        // Ops Supervisor: jaket gelap, helm emas, memegang tablet di tangan kiri
+        const rig = addRig(buildHuman(humanStyle(team, { vest: 0x0f172a, helmet: 0xf59e0b, goggles: true })));
+        rig.canWalk = true;
+        rig.root.scale.setScalar(1.04);
+        const hold = setArm(rig, -1, 0.35, 0.02, 1.45, false);
+        setArm(rig, 1, 0.04, 0.07, 0.15, true);
+        hold.hand.add(boxMesh(0.012, 0.11, 0.08, mats.blackSteel, 0.028, -0.075, 0, false));
+        hold.hand.add(new THREE.Mesh(new THREE.BoxGeometry(0.003, 0.095, 0.066),
+            new THREE.MeshStandardMaterial({ color: 0x38bdf8, emissive: 0x0ea5e9, emissiveIntensity: 0.7 })));
+        hold.hand.children[hold.hand.children.length - 1].position.set(0.035, -0.075, 0);
+        dir.add(rig.root);
+
     } else if (type === 'king') {
-        const cab = new THREE.Mesh(new THREE.BoxGeometry(0.52, 1.05, 0.5), mats.blackSteel);
-        cab.position.set(0, 0.53, 0.04); cab.castShadow = true; dir.add(cab);
-        const door = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.98, 0.02), mats.serverGlass);
-        door.position.set(0, 0.53, -0.22); dir.add(door);
+        dir.add(boxMesh(0.52, 1.0, 0.5, mats.blackSteel, 0, 0.58, 0.04));
+        dir.add(boxMesh(0.46, 0.93, 0.02, mats.serverGlass, 0, 0.58, -0.22, false));
+        [[-0.2, -0.17], [0.2, -0.17], [-0.2, 0.25], [0.2, 0.25]].forEach(([x, z]) => {
+            const wh = makeDetailedWheel(0.05, 0.04, mats.chrome); wh.position.set(x, 0.05, z); dir.add(wh); addWheel(wh, 0.05);
+        });
+        dir.add(boxMesh(0.5, 0.04, 0.48, mats.blackSteel, 0, 0.08, 0.04));
     }
 
     return root;
 }
+
 
 let pieces = [], selectedPiece = null, validMoves = [], currentTurn = 'blue', isAnimating = false, vsAI = true, highlights = [];
 
@@ -621,49 +873,178 @@ function triggerExplosion(pos) {
     }
 }
 
+// =====================================================================
+//  GERAKAN: bidak BERJALAN di atas papan (tanpa meloncat)
+//  - menghadap ke arah tujuan, lalu melangkah dengan siklus jalan
+//  - kuda berjalan lewat garis pembatas antar petak (bentuk L), tidak melompati bidak lain
+//  - kendaraan melaju dengan roda berputar
+// =====================================================================
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+function angDiff(a, b) {
+    let d = (b - a) % (Math.PI * 2);
+    if (d > Math.PI) d -= Math.PI * 2;
+    if (d < -Math.PI) d += Math.PI * 2;
+    return d;
+}
+function approachAngle(a, b, maxStep) {
+    const d = angDiff(a, b);
+    return Math.abs(d) <= maxStep ? a + d : a + Math.sign(d) * maxStep;
+}
+
+function buildPath(piece, mv) {
+    const sx = piece.position.x, sz = piece.position.z;
+    const ex = mv.x * tileSize - offset, ez = mv.z * tileSize - offset;
+    const pts = [[sx, sz]];
+    if (piece.userData.type === 'knight') {
+        const dx = mv.x - piece.userData.gridX, dz = mv.z - piece.userData.gridZ;
+        const half = tileSize / 2;
+        if (Math.abs(dx) === 2) {
+            const zb = sz + Math.sign(dz) * half;
+            pts.push([sx, zb], [ex, zb]);
+        } else {
+            const xb = sx + Math.sign(dx) * half;
+            pts.push([xb, sz], [xb, ez]);
+        }
+    }
+    pts.push([ex, ez]);
+    return pts;
+}
+
 function executeMove(piece, moveData) {
     isAnimating = true; clearHighlights();
-    const sx = piece.position.x, sz = piece.position.z;
-    const ex = moveData.x * tileSize - offset, ez = moveData.z * tileSize - offset;
-    let prog = 0;
-    const step = () => {
-        prog += 0.065;
-        if (prog < 1) {
-            piece.position.x = sx + (ex - sx) * prog;
-            piece.position.z = sz + (ez - sz) * prog;
-            piece.position.y = 0.05 + Math.sin(prog * Math.PI) * 0.55;
-            requestAnimationFrame(step);
-        } else {
-            piece.position.set(ex, 0.05, ez);
-            piece.userData.gridX = moveData.x; piece.userData.gridZ = moveData.z; piece.userData.hasMoved = true;
-            const uName = unitSpecs[piece.userData.type].name;
-            const coord = `${cols[moveData.x]}${8 - moveData.z}`;
-            let msg = `${uName} bergeser ke zona ${coord}.`;
-
-            if (moveData.attack && moveData.target) {
-                const v = moveData.target; v.userData.alive = false; scene.remove(v);
-                triggerExplosion(piece.position);
-                const vName = unitSpecs[v.userData.type].name;
-                msg = `💥 ELIMINASI! ${uName} menyingkirkan ${vName} di ${coord}!`;
-                addBattleLog(`${uName} ⚔️ ${vName} (${coord})`, true);
-                updateScoreUI();
-                if (v.userData.type === 'king') {
-                    updateHUD(`🏆 OVERRIDE SELESAI! Tim ${currentTurn.toUpperCase()} menguasai WMS Server!`);
-                    isAnimating = false; return;
-                }
-            } else {
-                addBattleLog(`${uName} ➔ ${coord}`, false);
-            }
-
-            currentTurn = currentTurn === 'blue' ? 'orange' : 'blue';
-            selectedPiece = null; validMoves = []; isAnimating = false;
-            updateHUD(msg);
-
-            if (vsAI && currentTurn === 'orange') setTimeout(runAIBot, 450);
-        }
+    const pts = buildPath(piece, moveData);
+    const segs = [];
+    let total = 0;
+    for (let i = 0; i < pts.length - 1; i++) {
+        const dx = pts[i + 1][0] - pts[i][0], dz = pts[i + 1][1] - pts[i][1], len = Math.hypot(dx, dz);
+        if (len < 1e-6) continue;
+        segs.push({ x0: pts[i][0], z0: pts[i][1], dx: dx / len, dz: dz / len, len, start: total, heading: Math.atan2(-dx, -dz) });
+        total += len;
+    }
+    const walker = HUMAN_WALKERS.includes(piece.userData.type);
+    let vmax, amp = 0.6, stepLen = 0.5;
+    if (walker) {
+        vmax = clamp(total / 4.2, 1.55, 2.2);
+        amp = clamp(0.40 + 0.14 * vmax, 0.5, 0.72);
+        stepLen = 0.95 * Math.sin(amp);
+    } else {
+        vmax = clamp(total / 2.4, 1.8, 3.4);
+    }
+    activeMove = {
+        piece, mv: moveData, segs, total, s: 0, vmax, amp, stepLen, walker, captured: false,
+        ex: moveData.x * tileSize - offset, ez: moveData.z * tileSize - offset
     };
-    step();
 }
+
+function captureVictim(m) {
+    if (m.captured || !m.mv.attack || !m.mv.target) return;
+    m.captured = true;
+    const v = m.mv.target;
+    v.userData.alive = false; scene.remove(v);
+    triggerExplosion(v.position);
+    const uName = unitSpecs[m.piece.userData.type].name;
+    const vName = unitSpecs[v.userData.type].name;
+    const coord = `${cols[m.mv.x]}${8 - m.mv.z}`;
+    addBattleLog(`${uName} ⚔️ ${vName} (${coord})`, true);
+    updateScoreUI();
+}
+
+function finishMove(m) {
+    const piece = m.piece, moveData = m.mv;
+    piece.position.set(m.ex, 0.05, m.ez);
+    piece.userData.gridX = moveData.x; piece.userData.gridZ = moveData.z; piece.userData.hasMoved = true;
+    activeMove = null;
+
+    const uName = unitSpecs[piece.userData.type].name;
+    const coord = `${cols[moveData.x]}${8 - moveData.z}`;
+    let msg = `${uName} berjalan ke zona ${coord}.`;
+
+    if (moveData.attack && moveData.target) {
+        captureVictim(m);
+        const vName = unitSpecs[moveData.target.userData.type].name;
+        msg = `💥 ELIMINASI! ${uName} menyingkirkan ${vName} di ${coord}!`;
+        if (moveData.target.userData.type === 'king') {
+            updateHUD(`🏆 OVERRIDE SELESAI! Tim ${currentTurn.toUpperCase()} menguasai WMS Server!`);
+            isAnimating = false; return;
+        }
+    } else {
+        addBattleLog(`${uName} ➔ ${coord}`, false);
+    }
+
+    currentTurn = currentTurn === 'blue' ? 'orange' : 'blue';
+    selectedPiece = null; validMoves = []; isAnimating = false;
+    updateHUD(msg);
+    if (vsAI && currentTurn === 'orange') setTimeout(runAIBot, 450);
+}
+
+function updateMove(dt) {
+    const m = activeMove;
+    if (!m) return;
+    const p = m.piece;
+    const findSeg = () => { for (const sg of m.segs) if (m.s < sg.start + sg.len) return sg; return m.segs[m.segs.length - 1]; };
+
+    // 1. badan berputar menghadap arah jalan (tidak menyamping / mundur)
+    let seg = findSeg();
+    const before = p.rotation.y;
+    p.rotation.y = approachAngle(p.rotation.y, seg.heading, 10 * dt);
+    const dTheta = p.rotation.y - before;
+    const align = Math.max(0, Math.cos(angDiff(p.rotation.y, seg.heading)));
+
+    // 2. kecepatan: mulai pelan, melaju, melambat saat tiba; berhenti sebentar di tikungan sampai badan lurus
+    const remaining = m.total - m.s;
+    const ease = Math.min(1, 0.22 + m.s / 0.7, 0.22 + remaining / 0.8);
+    const v = m.vmax * ease * align;
+    const ds = v * dt;
+    m.s = Math.min(m.total, m.s + ds);
+
+    // 3. posisi di sepanjang jalur (tinggi Y tetap -> tidak ada lompatan)
+    seg = findSeg();
+    const d = Math.min(seg.len, m.s - seg.start);
+    p.position.x = seg.x0 + seg.dx * d;
+    p.position.z = seg.z0 + seg.dz * d;
+    p.position.y = 0.05;
+
+    // 4. animasi lokomosi
+    if (m.walker) {
+        const vr = v / m.vmax;
+        p.userData.rigs.forEach(r => {
+            r.amp = m.amp * (0.35 + 0.65 * vr);
+            r.phase += (Math.PI * v / m.stepLen) * dt + Math.abs(dTheta) * 0.6;
+        });
+    } else {
+        p.userData.wheels.forEach(w => { w.g.rotation.x -= ds / w.r; });
+    }
+
+    // 5. lawan tersingkir saat penyerang sudah dekat
+    if (m.mv.attack && m.mv.target && !m.captured && (m.total - m.s) < tileSize * 0.55) captureVictim(m);
+
+    if (m.s >= m.total - 1e-4) finishMove(m);
+}
+
+// Pose semua unit: gait untuk mover, menghadap kembali ke posisi awal untuk yang lain
+function updatePieces(dt, t) {
+    for (const p of pieces) {
+        if (!p.userData.alive) continue;
+        const mover = activeMove && activeMove.piece === p;
+        let turning = false;
+        if (!mover) {
+            const d = angDiff(p.rotation.y, p.userData.restYaw);
+            if (Math.abs(d) > 0.002) {
+                p.rotation.y = approachAngle(p.rotation.y, p.userData.restYaw, 6 * dt);
+                turning = Math.abs(d) > 0.1;
+            }
+        }
+        for (const r of p.userData.rigs) {
+            if (r.canWalk) {
+                const tk = mover ? 1 : (turning ? 0.9 : 0);
+                if (turning) { r.amp = 0.34; r.phase += dt * 8; }
+                r.k += (tk - r.k) * Math.min(1, dt * 10);
+            }
+            poseHuman(r, t);
+        }
+    }
+}
+
 
 function runAIBot() {
     const aiPieces = pieces.filter(p => p.userData.alive && p.userData.team === 'orange');
@@ -682,13 +1063,13 @@ function runAIBot() {
 function spawnUnit(type, team, gx, gz) {
     const m = createUnitMesh(type, team);
     m.position.set(gx * tileSize - offset, 0.05, gz * tileSize - offset);
-    m.userData = { type, team, gridX: gx, gridZ: gz, alive: true, hasMoved: false };
+    Object.assign(m.userData, { type, team, gridX: gx, gridZ: gz, alive: true, hasMoved: false, restYaw: team === 'blue' ? 0 : Math.PI });
     scene.add(m); pieces.push(m);
 }
 
 function resetGame() {
     clearHighlights(); pieces.forEach(p => scene.remove(p)); pieces = [];
-    humanIdles.length = 0; animatedParts.length = 0;
+    activeMove = null;
     document.getElementById('move-history').innerHTML = '';
     selectedPiece = null; validMoves = []; currentTurn = 'blue'; isAnimating = false;
     const row = ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knight', 'rook'];
@@ -763,22 +1144,16 @@ window.addEventListener('pointerdown', (e) => {
     }
 });
 
-const clock = new THREE.Clock();
+let lastT = performance.now() / 1000;
 resetGame();
 
 function animate() {
     requestAnimationFrame(animate);
-    const t = clock.getElapsedTime();
-
-    animatedParts.forEach(p => {
-        if (p.type === 'spin') p.mesh.rotation.y = t * 1.8;
-    });
-
-    humanIdles.forEach(h => {
-        h.upperBody.position.y = h.baseY + Math.sin(t * 2.4 + h.phase) * 0.007;
-        h.headGroup.rotation.y = Math.sin(t * 1.1 + h.phase) * 0.07;
-    });
-
+    const now = performance.now() / 1000;
+    const dt = Math.min(0.05, Math.max(0.0001, now - lastT));
+    lastT = now;
+    updateMove(dt);
+    updatePieces(dt, now);
     controls.update();
     renderer.render(scene, camera);
 }
