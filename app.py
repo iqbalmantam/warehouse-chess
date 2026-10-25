@@ -2,7 +2,7 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 st.set_page_config(
-    page_title="WAREHOUSE COMMAND: TACTICAL CHESS 3D",
+    page_title="WAREHOUSE COMMAND: ULTRA-REALISTIC 3D",
     page_icon="🏗️",
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -22,32 +22,20 @@ HTML_CODE = r'''<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Warehouse Command: Tactical 3D Chess</title>
+<title>Warehouse Command: Ultra-Realistic</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
     * { box-sizing: border-box; user-select: none; }
-    body {
-        margin: 0; padding: 0; overflow: hidden;
-        background: #05070b;
-        font-family: 'Rajdhani', 'Segoe UI', sans-serif;
-        color: #e2e8f0;
-    }
+    body { margin: 0; padding: 0; overflow: hidden; background: #05070b; font-family: 'Rajdhani', sans-serif; color: #e2e8f0; }
     #canvas-container { width: 100vw; height: 100vh; display: block; }
-
-    /* CINEMATIC VIGNETTE OVERLAY (Mencegah Silau di Tepi Layar) */
-    #vignette {
-        position: fixed; inset: 0; pointer-events: none; z-index: 2;
-        background: radial-gradient(circle at center, transparent 55%, rgba(3, 6, 12, 0.75) 100%);
-    }
-
-    /* TOP COMMAND BAR (AAA ESPORTS / TACTICAL HUD) */
+    #vignette { position: fixed; inset: 0; pointer-events: none; z-index: 2; background: radial-gradient(circle at center, transparent 55%, rgba(3, 6, 12, 0.78) 100%); }
+    
     #top-bar {
         position: absolute; top: 0; left: 0; right: 0; height: 68px;
         background: linear-gradient(180deg, rgba(9, 13, 22, 0.96) 0%, rgba(9, 13, 22, 0.75) 100%);
         border-bottom: 1px solid rgba(56, 189, 248, 0.22);
         display: flex; justify-content: space-between; align-items: center;
         padding: 0 24px; z-index: 10; backdrop-filter: blur(12px);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
     }
     .brand-cluster { display: flex; align-items: center; gap: 14px; }
     .brand-emblem {
@@ -57,115 +45,66 @@ HTML_CODE = r'''<!DOCTYPE html>
         font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 20px; color: #05070b;
         box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
     }
-    .brand-title h1 {
-        margin: 0; font-family: 'Orbitron', sans-serif; font-size: 16px;
-        font-weight: 800; letter-spacing: 2px; color: #f8fafc;
-    }
-    .brand-title span {
-        font-size: 11px; color: #f59e0b; text-transform: uppercase;
-        letter-spacing: 1.5px; font-weight: 700; display: block;
-    }
+    .brand-title h1 { margin: 0; font-family: 'Orbitron', sans-serif; font-size: 16px; font-weight: 800; letter-spacing: 2px; color: #f8fafc; }
+    .brand-title span { font-size: 11px; color: #f59e0b; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; display: block; }
 
-    /* SCORE & TURN CENTER HUD */
     .versus-hud {
         display: flex; align-items: center; gap: 18px;
-        background: rgba(15, 23, 42, 0.85);
-        border: 1px solid rgba(148, 163, 184, 0.2);
+        background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(148, 163, 184, 0.2);
         padding: 6px 22px; border-radius: 40px;
     }
     .team-score { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 14px; letter-spacing: 1px; }
     .team-score.blue { color: #38bdf8; }
     .team-score.orange { color: #fbbf24; }
-    .score-pill {
-        background: rgba(2, 6, 23, 0.8); padding: 2px 10px; border-radius: 12px;
-        font-family: 'Orbitron', sans-serif; font-size: 14px; border: 1px solid currentColor;
-    }
+    .score-pill { background: rgba(2, 6, 23, 0.8); padding: 2px 10px; border-radius: 12px; font-family: 'Orbitron', sans-serif; font-size: 14px; border: 1px solid currentColor; }
     #turn-banner {
-        padding: 5px 16px; border-radius: 20px;
-        font-family: 'Orbitron', sans-serif; font-size: 11px; font-weight: 800;
+        padding: 5px 16px; border-radius: 20px; font-family: 'Orbitron', sans-serif; font-size: 11px; font-weight: 800;
         letter-spacing: 1.5px; text-transform: uppercase;
-        transition: all 0.3s;
     }
-    .turn-blue { background: rgba(2, 132, 199, 0.3); color: #38bdf8; border: 1px solid #38bdf8; box-shadow: 0 0 14px rgba(56, 189, 248, 0.3); }
-    .turn-orange { background: rgba(217, 119, 6, 0.3); color: #fbbf24; border: 1px solid #fbbf24; box-shadow: 0 0 14px rgba(251, 191, 36, 0.3); }
+    .turn-blue { background: rgba(2, 132, 199, 0.3); color: #38bdf8; border: 1px solid #38bdf8; }
+    .turn-orange { background: rgba(217, 119, 6, 0.3); color: #fbbf24; border: 1px solid #fbbf24; }
 
-    /* TOP RIGHT CONTROLS */
     .toolbar { display: flex; gap: 8px; }
     .t-btn {
-        background: rgba(15, 23, 42, 0.9);
-        border: 1px solid rgba(148, 163, 184, 0.3);
-        color: #cbd5e1; padding: 8px 13px; border-radius: 6px;
-        font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 13px;
-        letter-spacing: 0.8px; text-transform: uppercase; cursor: pointer;
-        transition: all 0.2s;
+        background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(148, 163, 184, 0.3);
+        color: #cbd5e1; padding: 8px 13px; border-radius: 6px; font-family: 'Rajdhani', sans-serif;
+        font-weight: 700; font-size: 13px; letter-spacing: 0.8px; text-transform: uppercase; cursor: pointer; transition: 0.2s;
     }
-    .t-btn:hover { background: rgba(56, 189, 248, 0.15); border-color: #38bdf8; color: #fff; transform: translateY(-1px); }
+    .t-btn:hover { background: rgba(56, 189, 248, 0.15); border-color: #38bdf8; color: #fff; }
     .t-btn.active { background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); border-color: #38bdf8; color: #fff; }
 
-    /* LEFT PANEL: UNIT INSPECTOR TELEMETRY CARD */
     #unit-inspector {
         position: absolute; top: 86px; left: 20px; width: 270px;
         background: linear-gradient(160deg, rgba(11, 17, 30, 0.92) 0%, rgba(7, 11, 20, 0.95) 100%);
-        border: 1px solid rgba(56, 189, 248, 0.28);
-        border-left: 4px solid #38bdf8;
-        border-radius: 8px; padding: 14px 16px; z-index: 10;
-        backdrop-filter: blur(10px);
-        box-shadow: 0 15px 35px rgba(0,0,0,0.75);
+        border: 1px solid rgba(56, 189, 248, 0.28); border-left: 4px solid #38bdf8;
+        border-radius: 8px; padding: 14px 16px; z-index: 10; backdrop-filter: blur(10px);
     }
-    .panel-tag {
-        font-family: 'Orbitron', sans-serif; font-size: 10px; color: #64748b;
-        letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px;
-    }
-    #insp-name {
-        font-family: 'Orbitron', sans-serif; font-size: 15px; font-weight: 800;
-        color: #f8fafc; margin: 0 0 2px 0;
-    }
+    .panel-tag { font-family: 'Orbitron', sans-serif; font-size: 10px; color: #64748b; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
+    #insp-name { font-family: 'Orbitron', sans-serif; font-size: 15px; font-weight: 800; color: #f8fafc; margin: 0 0 2px 0; }
     #insp-role { font-size: 12px; color: #f59e0b; font-weight: 700; margin-bottom: 10px; }
     .stat-row { margin: 6px 0; }
     .stat-label { display: flex; justify-content: space-between; font-size: 11px; color: #94a3b8; font-weight: 600; margin-bottom: 3px; }
     .stat-bar { height: 5px; background: rgba(30, 41, 59, 0.9); border-radius: 3px; overflow: hidden; }
-    .stat-fill { height: 100%; background: linear-gradient(90deg, #0284c7, #38bdf8); transition: width 0.3s; }
-    .roster-mini {
-        margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.08);
-        font-size: 11px; color: #94a3b8; line-height: 1.55;
-    }
+    .stat-fill { height: 100%; background: linear-gradient(90deg, #0284c7, #38bdf8); }
+    .roster-mini { margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.08); font-size: 11px; color: #94a3b8; line-height: 1.55; }
     .roster-mini b { color: #e2e8f0; }
 
-    /* RIGHT PANEL: BATTLE OPERATIONS LOG */
     #ops-panel {
         position: absolute; top: 86px; right: 20px; width: 265px;
         background: linear-gradient(160deg, rgba(11, 17, 30, 0.9) 0%, rgba(7, 11, 20, 0.94) 100%);
-        border: 1px solid rgba(245, 158, 11, 0.25);
-        border-right: 4px solid #f59e0b;
-        border-radius: 8px; padding: 14px 16px; z-index: 10;
-        backdrop-filter: blur(10px);
-        box-shadow: 0 15px 35px rgba(0,0,0,0.75);
+        border: 1px solid rgba(245, 158, 11, 0.25); border-right: 4px solid #f59e0b;
+        border-radius: 8px; padding: 14px 16px; z-index: 10; backdrop-filter: blur(10px);
     }
-    #move-history {
-        max-height: 150px; overflow-y: auto; font-size: 12px;
-        display: flex; flex-direction: column; gap: 5px; margin-top: 8px;
-        padding-right: 4px;
-    }
-    .log-entry {
-        background: rgba(15, 23, 42, 0.75); padding: 5px 8px; border-radius: 4px;
-        border-left: 2px solid #475569; color: #cbd5e1; font-size: 11.5px;
-    }
+    #move-history { max-height: 150px; overflow-y: auto; font-size: 12px; display: flex; flex-direction: column; gap: 5px; margin-top: 8px; padding-right: 4px; }
+    .log-entry { background: rgba(15, 23, 42, 0.75); padding: 5px 8px; border-radius: 4px; border-left: 2px solid #475569; color: #cbd5e1; font-size: 11.5px; }
     .log-entry.combat { border-left-color: #ef4444; background: rgba(127, 29, 29, 0.25); color: #fca5a5; }
 
-    /* BOTTOM TACTICAL TICKER */
     #bottom-ticker {
         position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%);
-        background: rgba(9, 13, 22, 0.92);
-        border: 1px solid rgba(56, 189, 248, 0.3);
-        padding: 10px 28px; border-radius: 30px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-        display: flex; align-items: center; gap: 12px; z-index: 10;
-        font-size: 14px; font-weight: 600; letter-spacing: 0.5px;
+        background: rgba(9, 13, 22, 0.92); border: 1px solid rgba(56, 189, 248, 0.3);
+        padding: 10px 28px; border-radius: 30px; display: flex; align-items: center; gap: 12px; z-index: 10; font-size: 14px; font-weight: 600;
     }
-    .pulse-dot {
-        width: 9px; height: 9px; border-radius: 50%; background: #22c55e;
-        box-shadow: 0 0 10px #22c55e;
-    }
+    .pulse-dot { width: 9px; height: 9px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 10px #22c55e; }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -173,83 +112,70 @@ HTML_CODE = r'''<!DOCTYPE html>
 <body>
     <div id="vignette"></div>
 
-    <!-- TOP PROFESSIONAL GAME BAR -->
     <div id="top-bar">
         <div class="brand-cluster">
             <div class="brand-emblem">WC</div>
             <div class="brand-title">
                 <h1>WAREHOUSE COMMAND</h1>
-                <span>Tactical Logistics Operations • 3D Simulator</span>
+                <span>Ultra-Realistic Human Anatomy • 3D Simulator</span>
             </div>
         </div>
 
         <div class="versus-hud">
-            <div class="team-score blue">
-                <span>INBOUND</span>
-                <span id="score-blue" class="score-pill">16</span>
-            </div>
+            <div class="team-score blue"><span>INBOUND</span><span id="score-blue" class="score-pill">16</span></div>
             <div id="turn-banner" class="turn-blue">SHIFT BIRU AKTIF</div>
-            <div class="team-score orange">
-                <span id="score-orange" class="score-pill">16</span>
-                <span>OUTBOUND</span>
-            </div>
+            <div class="team-score orange"><span id="score-orange" class="score-pill">16</span><span>OUTBOUND</span></div>
         </div>
 
         <div class="toolbar">
             <button id="btn-ai" class="t-btn active" onclick="toggleAI()">🤖 vs AI Bot</button>
-            <button class="t-btn" onclick="setCameraView('closeup')">🔍 Inspeksi Unit</button>
+            <button class="t-btn" onclick="setCameraView('closeup')">🔍 Close-Up Anatomi</button>
             <button class="t-btn" onclick="setCameraView('perspective')">🎥 Kamera Taktis</button>
             <button class="t-btn" onclick="setCameraView('top')">📐 Radar Atas</button>
             <button class="t-btn" onclick="resetGame()">🔄 Reset Shift</button>
         </div>
     </div>
 
-    <!-- LEFT TELEMETRY & UNIT INSPECTOR -->
     <div id="unit-inspector">
         <div class="panel-tag">UNIT TELEMETRY INSPECTOR</div>
-        <h2 id="insp-name">COUNTERBALANCE FORKLIFT</h2>
-        <div id="insp-role">Heavy Logistics Armor • Benteng (Rook)</div>
+        <h2 id="insp-name">OPERATOR PICKER</h2>
+        <div id="insp-role">Frontline Logistics • Pion</div>
         <div class="stat-row">
-            <div class="stat-label"><span>DAYA ANGKUT / POWER</span><span id="st-pow-val">95%</span></div>
-            <div class="stat-bar"><div id="st-pow" class="stat-fill" style="width:95%"></div></div>
+            <div class="stat-label"><span>AGILITY / KELINCAHAN</span><span id="st-pow-val">75%</span></div>
+            <div class="stat-bar"><div id="st-pow" class="stat-fill" style="width:75%"></div></div>
         </div>
         <div class="stat-row">
-            <div class="stat-label"><span>MOBILITAS / JANGKAUAN</span><span id="st-rng-val">90%</span></div>
-            <div class="stat-bar"><div id="st-rng" class="stat-fill" style="width:90%"></div></div>
+            <div class="stat-label"><span>WORK CAPACITY</span><span id="st-rng-val">80%</span></div>
+            <div class="stat-bar"><div id="st-rng" class="stat-fill" style="width:80%"></div></div>
         </div>
         <div class="roster-mini">
-            <div><b>Pion:</b> Operator Gudang (Bawa Kardus)</div>
-            <div><b>Benteng:</b> Heavy Forklift + Pengemudi</div>
-            <div><b>Kuda:</b> Electric Reach Truck + Operator</div>
+            <div><b>Pion:</b> Operator Picker (Manusia Asli)</div>
+            <div><b>Benteng:</b> Forklift + Driver Manusia</div>
+            <div><b>Kuda:</b> Reach Truck + Operator</div>
             <div><b>Gajah:</b> QC Auditor (Laser Scanner)</div>
-            <div><b>Menteri:</b> Ops Supervisor (HT + Tablet)</div>
-            <div><b>Raja:</b> Main WMS Server Core</div>
+            <div><b>Menteri:</b> Ops Supervisor</div>
+            <div><b>Raja:</b> WMS Server Core</div>
         </div>
     </div>
 
-    <!-- RIGHT BATTLE LOG -->
     <div id="ops-panel">
         <div class="panel-tag">WMS OPERATIONS LOG</div>
-        <div style="font-size:12px; color:#f59e0b; font-weight:700;">RIWAYAT TRANSMISI GUDANG</div>
+        <div style="font-size:12px; color:#f59e0b; font-weight:700;">TRANSMISI GUDANG AKTIF</div>
         <div id="move-history"></div>
     </div>
 
-    <!-- BOTTOM STATUS TICKER -->
     <div id="bottom-ticker">
         <div class="pulse-dot"></div>
-        <div id="action-log">Sistem WMS Online. Pilih personel atau kendaraan Biru untuk memulai instruksi kerja.</div>
+        <div id="action-log">Sistem WMS Online. Anatomi manusia realistis aktif. Pilih unit untuk melangkah.</div>
     </div>
 
     <div id="canvas-container"></div>
 
 <script>
-// ============================================================================
-// 1. CINEMATIC ANTI-GLARE RENDERER (TANPA ROOM-ENVIRONMENT YANG MENYILAUKAN)
-// ============================================================================
 const container = document.getElementById('canvas-container');
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x060911);
-scene.fog = new THREE.FogExp2(0x060911, 0.015);
+scene.background = new THREE.Color(0x05070b);
+scene.fog = new THREE.FogExp2(0x05070b, 0.014);
 
 const camera = new THREE.PerspectiveCamera(38, window.innerWidth / window.innerHeight, 0.1, 220);
 camera.position.set(0, 11.2, 14.2);
@@ -259,7 +185,6 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-// Exposure diturunkan ke 0.72 agar warna sangat pekat, kontras tinggi & TIDAK SILAU
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 0.72;
 renderer.outputEncoding = THREE.sRGBEncoding;
@@ -273,10 +198,8 @@ controls.minDistance = 3.8;
 controls.maxDistance = 26;
 controls.target.set(0, 0.5, 0);
 
-// BALANCED DRAMATIC THREE-POINT STUDIO LIGHTING
 const ambient = new THREE.HemisphereLight(0x93c5fd, 0x090d16, 0.45);
 scene.add(ambient);
-
 const sunLight = new THREE.DirectionalLight(0xfff1e0, 1.15);
 sunLight.position.set(9, 19, 11);
 sunLight.castShadow = true;
@@ -286,13 +209,9 @@ Object.assign(sunLight.shadow.camera, { left: -d, right: d, top: d, bottom: -d, 
 sunLight.shadow.bias = -0.0004;
 scene.add(sunLight);
 
-// Rim Lights Lembut (Biru Dingin & Amber Hangat)
 const rimBlue = new THREE.PointLight(0x0284c7, 0.85, 26); rimBlue.position.set(-10, 6, 9); scene.add(rimBlue);
 const rimAmber = new THREE.PointLight(0xd97706, 0.85, 26); rimAmber.position.set(10, 6, -9); scene.add(rimAmber);
 
-// ============================================================================
-// 2. HIGH-CONTRAST DARK INDUSTRIAL TEXTURES (ZERO GLARE)
-// ============================================================================
 function makeHazardTex() {
     const c = document.createElement('canvas'); c.width = 256; c.height = 256;
     const ctx = c.getContext('2d');
@@ -309,31 +228,13 @@ function makeHazardTex() {
 function makeTileTex(isDark, lbl) {
     const c = document.createElement('canvas'); c.width = 256; c.height = 256;
     const ctx = c.getContext('2d');
-    // Warna lantai jauh lebih gelap & elegan (Dark Slate vs Deep Steel) agar tidak silau
-    ctx.fillStyle = isDark ? '#0f172a' : '#1e293b';
-    ctx.fillRect(0,0,256,256);
-
-    // Tekstur micro-grid taktis
-    ctx.strokeStyle = isDark ? 'rgba(51,65,85,0.35)' : 'rgba(71,85,105,0.4)';
-    ctx.lineWidth = 1;
-    for(let g=32; g<256; g+=32) {
-        ctx.beginPath(); ctx.moveTo(g,0); ctx.lineTo(g,256); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(0,g); ctx.lineTo(256,g); ctx.stroke();
-    }
-
-    // Garis border petak industri
-    ctx.strokeStyle = isDark ? '#1e293b' : '#334155';
-    ctx.lineWidth = 8; ctx.strokeRect(4,4,248,248);
-
-    // Siku marka kuning redup di sudut petak
-    ctx.fillStyle = 'rgba(234, 179, 8, 0.35)';
-    ctx.fillRect(14,14,16,3); ctx.fillRect(14,14,3,16);
+    ctx.fillStyle = isDark ? '#0f172a' : '#1e293b'; ctx.fillRect(0,0,256,256);
+    ctx.strokeStyle = isDark ? '#1e293b' : '#334155'; ctx.lineWidth = 8; ctx.strokeRect(4,4,248,248);
+    ctx.fillStyle = 'rgba(234, 179, 8, 0.35)'; ctx.fillRect(14,14,16,3); ctx.fillRect(14,14,3,16);
     ctx.fillRect(226,14,16,3); ctx.fillRect(239,14,3,16);
-
     if (lbl) {
         ctx.fillStyle = isDark ? 'rgba(148,163,184,0.45)' : 'rgba(203,213,225,0.55)';
-        ctx.font = 'bold 30px Orbitron, monospace';
-        ctx.fillText(lbl, 18, 234);
+        ctx.font = 'bold 30px Orbitron, monospace'; ctx.fillText(lbl, 18, 234);
     }
     return new THREE.CanvasTexture(c);
 }
@@ -346,48 +247,14 @@ function makeCardboardTex() {
     ctx.fillStyle = '#e2e8f0'; ctx.fillRect(24, 28, 92, 58);
     ctx.fillStyle = '#0f172a';
     for(let b=32; b<108; b+=6) ctx.fillRect(b, 36, (b%12===0)?4:2, 32);
-    ctx.strokeStyle = '#5c3a1b'; ctx.lineWidth = 6; ctx.strokeRect(3,3,250,250);
     return new THREE.CanvasTexture(c);
 }
 
-function makeFaceTex() {
-    const c = document.createElement('canvas'); c.width = 256; c.height = 256;
-    const ctx = c.getContext('2d');
-    ctx.fillStyle = '#d99b72'; ctx.fillRect(0,0,256,256);
-    // Rambut samping & belakang
-    ctx.fillStyle = '#1e1b18'; ctx.fillRect(0, 0, 256, 75);
-    // Alis tegas
-    ctx.fillStyle = '#1e1b18';
-    ctx.fillRect(88, 96, 28, 7); ctx.fillRect(140, 96, 28, 7);
-    // Mata putih + pupil hitam
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(92, 108, 22, 12); ctx.fillRect(142, 108, 22, 12);
-    ctx.fillStyle = '#0f172a';
-    ctx.fillRect(100, 109, 10, 10); ctx.fillRect(146, 109, 10, 10);
-    // Mulut & ekspresi tegas
-    ctx.fillStyle = '#8c4f32';
-    ctx.fillRect(110, 162, 36, 6);
-    return new THREE.CanvasTexture(c);
-}
-
-// ============================================================================
-// 3. FULL WAREHOUSE BUILDING ARCHITECTURE (WALLS, DOCK DOORS, RACKS, BOLLARDS)
-// ============================================================================
 const boardGroup = new THREE.Group(); scene.add(boardGroup);
+const warehouseFloor = new THREE.Mesh(new THREE.PlaneGeometry(80, 80), new THREE.MeshStandardMaterial({ color: 0x070a12, roughness: 0.75 }));
+warehouseFloor.rotation.x = -Math.PI/2; warehouseFloor.position.y = -0.36; warehouseFloor.receiveShadow = true; scene.add(warehouseFloor);
 
-// Lantai Beton Gudang Utama (Matte Dark Concrete)
-const warehouseFloor = new THREE.Mesh(
-    new THREE.PlaneGeometry(80, 80),
-    new THREE.MeshStandardMaterial({ color: 0x070a12, roughness: 0.75, metalness: 0.1 })
-);
-warehouseFloor.rotation.x = -Math.PI/2; warehouseFloor.position.y = -0.36; warehouseFloor.receiveShadow = true;
-scene.add(warehouseFloor);
-
-// Bingkai Platform Taktis Papan Catur
-const base = new THREE.Mesh(
-    new THREE.BoxGeometry(10.6, 0.36, 10.6),
-    new THREE.MeshStandardMaterial({ color: 0x0b111e, roughness: 0.4, metalness: 0.5 })
-);
+const base = new THREE.Mesh(new THREE.BoxGeometry(10.6, 0.36, 10.6), new THREE.MeshStandardMaterial({ color: 0x0b111e, roughness: 0.4 }));
 base.position.y = -0.2; base.receiveShadow = true; boardGroup.add(base);
 
 const hazMat = new THREE.MeshStandardMaterial({ map: makeHazardTex(), roughness: 0.5 });
@@ -404,58 +271,19 @@ for (let x = 0; x < 8; x++) {
         const lbl = (z === 7) ? cols[x] : (x === 0 ? String(8 - z) : '');
         const tile = new THREE.Mesh(
             new THREE.BoxGeometry(tileSize * 0.985, 0.1, tileSize * 0.985),
-            new THREE.MeshStandardMaterial({
-                map: makeTileTex(isDark, lbl),
-                roughness: 0.48, // Tidak lagi terlalu licin/mengkilap agar bebas silau
-                metalness: 0.12
-            })
+            new THREE.MeshStandardMaterial({ map: makeTileTex(isDark, lbl), roughness: 0.48 })
         );
         tile.position.set(x * tileSize - offset, 0, z * tileSize - offset);
-        tile.receiveShadow = true;
-        tile.userData = { gridX: x, gridZ: z };
-        boardGroup.add(tile);
-        tiles[x][z] = tile;
+        tile.receiveShadow = true; tile.userData = { gridX: x, gridZ: z };
+        boardGroup.add(tile); tiles[x][z] = tile;
     }
 }
 
-// Dinding Belakang Loading Dock & Pintu Rolling Door Gudang
-const backWall = new THREE.Mesh(
-    new THREE.BoxGeometry(36, 10, 0.5),
-    new THREE.MeshStandardMaterial({ color: 0x0b111e, roughness: 0.8 })
-);
-backWall.position.set(0, 4.6, -13.5);
-scene.add(backWall);
-
-// 4 Pintu Loading Dock dengan Lampu Indikator Hijau/Merah
-[-9, -3, 3, 9].forEach((dx, i) => {
-    const doorFrame = new THREE.Mesh(new THREE.BoxGeometry(3.4, 4.2, 0.6), new THREE.MeshStandardMaterial({ color: 0x1e293b }));
-    doorFrame.position.set(dx, 1.8, -13.4); scene.add(doorFrame);
-
-    const shutter = new THREE.Mesh(new THREE.BoxGeometry(3.0, 3.8, 0.65), new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.5, roughness: 0.5 }));
-    shutter.position.set(dx, 1.7, -13.38); scene.add(shutter);
-
-    // Lampu Status Dock
-    const dockLight = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.15, 0.7), new THREE.MeshStandardMaterial({
-        color: i % 2 === 0 ? 0x22c55e : 0xf59e0b,
-        emissive: i % 2 === 0 ? 0x16a34a : 0xd97706,
-        emissiveIntensity: 0.9
-    }));
-    dockLight.position.set(dx, 4.1, -13.35); scene.add(dockLight);
-});
-
-// Tiang Bollard Pelindung Kuning di Sudut Area Papan
-const bollardMat = new THREE.MeshStandardMaterial({ color: 0xeab308, roughness: 0.35, metalness: 0.3 });
-[[-5.6, -5.6], [5.6, -5.6], [-5.6, 5.6], [5.6, 5.6]].forEach(([bx, bz]) => {
-    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.9, 14), bollardMat);
-    post.position.set(bx, 0.1, bz); post.castShadow = true; scene.add(post);
-});
-
-// Rak Gudang Heavy-Duty di Kiri & Kanan
 const boxTex = makeCardboardTex();
 function buildRack(xPos, zPos, rotY) {
     const r = new THREE.Group();
-    const uMat = new THREE.MeshStandardMaterial({ color: 0x1e3a8a, metalness: 0.5, roughness: 0.4 });
-    const bMat = new THREE.MeshStandardMaterial({ color: 0xc2410c, metalness: 0.4, roughness: 0.4 });
+    const uMat = new THREE.MeshStandardMaterial({ color: 0x1e3a8a, roughness: 0.4 });
+    const bMat = new THREE.MeshStandardMaterial({ color: 0xc2410c, roughness: 0.4 });
     const cMat = new THREE.MeshStandardMaterial({ map: boxTex, roughness: 0.75 });
     [-1.8, 0, 1.8].forEach(lx => [-0.42, 0.42].forEach(lz => {
         const p = new THREE.Mesh(new THREE.BoxGeometry(0.09, 3.8, 0.09), uMat);
@@ -476,19 +304,13 @@ function buildRack(xPos, zPos, rotY) {
 buildRack(-7.8, -2.4, Math.PI/2); buildRack(-7.8, 2.4, Math.PI/2);
 buildRack(7.8, -2.4, -Math.PI/2); buildRack(7.8, 2.4, -Math.PI/2);
 
-// ============================================================================
-// 4. REALISTIC CHARACTER ANATOMY & CAD VEHICLE MODELS (WITH SEATED DRIVERS!)
-// ============================================================================
 const animatedParts = [];
 const humanIdles = [];
-const faceTex = makeFaceTex();
 
 const mats = {
     skin: new THREE.MeshStandardMaterial({ color: 0xd99b72, roughness: 0.55 }),
-    face: new THREE.MeshStandardMaterial({ map: faceTex, roughness: 0.55 }),
+    hair: new THREE.MeshStandardMaterial({ color: 0x18130f, roughness: 0.8 }),
     cargoPants: new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.85 }),
-    kneePad: new THREE.MeshStandardMaterial({ color: 0x090d16, roughness: 0.5 }),
-    darkIron: new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.7, roughness: 0.35 }),
     blackSteel: new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.65, roughness: 0.4 }),
     chrome: new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.9, roughness: 0.15 }),
     rubberTire: new THREE.MeshStandardMaterial({ color: 0x090d16, roughness: 0.92 }),
@@ -501,7 +323,6 @@ const mats = {
     whiteHelmet: new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.3 }),
     goldHelmet: new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.25, metalness: 0.45 }),
     visorGlass: new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.15, metalness: 0.8 }),
-    stretchWrap: new THREE.MeshStandardMaterial({ color: 0xbae6fd, roughness: 0.2, transparent: true, opacity: 0.38 }),
     serverGlass: new THREE.MeshStandardMaterial({ color: 0x090d16, roughness: 0.15, transparent: true, opacity: 0.7 }),
     amberBeacon: new THREE.MeshStandardMaterial({ color: 0xf59e0b, emissive: 0xd97706, emissiveIntensity: 1.0 })
 };
@@ -512,8 +333,6 @@ function makeDetailedWheel(radius, width, rimMat) {
     tire.rotation.z = Math.PI / 2; tire.castShadow = true; wGroup.add(tire);
     const rim = new THREE.Mesh(new THREE.CylinderGeometry(radius * 0.55, radius * 0.55, width + 0.01, 14), rimMat);
     rim.rotation.z = Math.PI / 2; wGroup.add(rim);
-    const hub = new THREE.Mesh(new THREE.CylinderGeometry(radius * 0.2, radius * 0.2, width + 0.02, 10), mats.blackSteel);
-    hub.rotation.z = Math.PI / 2; wGroup.add(hub);
     return wGroup;
 }
 
@@ -523,359 +342,194 @@ function makeEuroPallet(w, l) {
         const slat = new THREE.Mesh(new THREE.BoxGeometry(w, 0.02, l * 0.16), mats.woodPallet);
         slat.position.set(0, 0.06, i * (l * 0.2)); slat.castShadow = true; p.add(slat);
     }
-    [-w * 0.4, 0, w * 0.4].forEach(bx => {
-        const block = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.045, l * 0.95), mats.woodPallet);
-        block.position.set(bx, 0.03, 0); p.add(block);
-    });
     return p;
 }
 
-// PEMBANGUN MANUSIA REALISTIS (DENGAN SAKU KARGO, KNEE PADS, KERAH BAJU, WAJAH & RAMBUT)
-function buildRealisticHuman(teamMat, vestMat, helmetMat, hasGoggles, isSeated = false) {
+// BENTUK ANATOMI MANUSIA ORGANIK (Bukan Boneka / Bukan Balok)
+function buildOrganicHuman(teamMat, vestMat, helmetMat, hasGoggles, isSeated = false) {
     const human = new THREE.Group();
 
     if (!isSeated) {
-        // Kaki Berdiri Proporsional + Knee Pads + Saku Kargo Samping
-        [-0.095, 0.095].forEach(lx => {
-            const sole = new THREE.Mesh(new THREE.BoxGeometry(0.095, 0.038, 0.2), mats.rubberTire);
-            sole.position.set(lx, 0.019, -0.02); human.add(sole);
+        [-0.09, 0.09].forEach(lx => {
+            const boot = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.16), mats.leather);
+            boot.position.set(lx, 0.04, -0.01); boot.castShadow = true; human.add(boot);
 
-            const boot = new THREE.Mesh(new THREE.BoxGeometry(0.088, 0.09, 0.15), mats.leather);
-            boot.position.set(lx, 0.075, -0.01); boot.castShadow = true; human.add(boot);
-
-            const calf = new THREE.Mesh(new THREE.CylinderGeometry(0.052, 0.044, 0.22, 14), mats.cargoPants);
-            calf.position.set(lx, 0.21, 0); calf.castShadow = true; human.add(calf);
-
-            // Pelindung Lutut Taktis (Knee Pad)
-            const kPad = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.065, 0.03), mats.kneePad);
-            kPad.position.set(lx, 0.31, -0.045); human.add(kPad);
-
-            const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.064, 0.054, 0.23, 14), mats.cargoPants);
-            thigh.position.set(lx, 0.43, 0); thigh.castShadow = true; human.add(thigh);
-
-            // Saku Kargo Timbul di Paha Luar
-            const pocket = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.09, 0.08), mats.cargoPants);
-            pocket.position.set(lx + (lx < 0 ? -0.055 : 0.055), 0.43, 0); human.add(pocket);
+            // Kaki menyempit natural (calf & thigh organik)
+            const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.032, 0.44, 16), mats.cargoPants);
+            leg.position.set(lx, 0.28, 0); leg.castShadow = true; human.add(leg);
         });
     } else {
-        // Posisi Kaki Duduk Mengemudi di Kursi Forklift
-        [-0.09, 0.09].forEach(lx => {
-            const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.058, 0.05, 0.22, 12), mats.cargoPants);
-            thigh.rotation.x = Math.PI / 2.2;
-            thigh.position.set(lx, 0.52, -0.08); human.add(thigh);
-
-            const calf = new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.04, 0.2, 12), mats.cargoPants);
-            calf.position.set(lx, 0.4, -0.17); human.add(calf);
-
-            const boot = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.07, 0.15), mats.leather);
+        [-0.085, 0.085].forEach(lx => {
+            const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.04, 0.22, 12), mats.cargoPants);
+            thigh.rotation.x = Math.PI / 2.2; thigh.position.set(lx, 0.52, -0.08); human.add(thigh);
+            const boot = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.06, 0.14), mats.leather);
             boot.position.set(lx, 0.3, -0.2); human.add(boot);
         });
     }
 
-    const baseY = isSeated ? 0.54 : 0.54;
-    const pelvis = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.1, 0.16), mats.cargoPants);
+    const baseY = 0.52;
+    const pelvis = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.1, 0.12, 16), mats.cargoPants);
     pelvis.position.set(0, baseY, 0); human.add(pelvis);
 
-    const belt = new THREE.Mesh(new THREE.BoxGeometry(0.275, 0.04, 0.175), mats.leather);
-    belt.position.set(0, baseY + 0.04, 0); human.add(belt);
-    const buckle = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.042, 0.185), mats.chrome);
-    buckle.position.set(0, baseY + 0.04, 0); human.add(buckle);
-
     const upperBody = new THREE.Group();
-    upperBody.position.set(0, baseY + 0.06, 0);
+    upperBody.position.set(0, baseY + 0.08, 0);
     human.add(upperBody);
 
-    // Torso Anatomis (Bahu Lebar, Pinggang Ramping)
-    const chest = new THREE.Mesh(new THREE.CylinderGeometry(0.155, 0.125, 0.34, 16), teamMat);
-    chest.scale.set(1.18, 1, 0.78); chest.position.set(0, 0.17, 0); chest.castShadow = true;
-    upperBody.add(chest);
+    // Torso Organik (Bahu melengkung, dada bidang)
+    const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.11, 0.35, 16), teamMat);
+    torso.position.set(0, 0.17, 0); torso.castShadow = true; upperBody.add(torso);
 
-    // Rompi Safety
-    const vest = new THREE.Mesh(new THREE.CylinderGeometry(0.162, 0.132, 0.31, 16), vestMat);
-    vest.scale.set(1.19, 1, 0.8); vest.position.set(0, 0.17, 0); vest.castShadow = true;
-    upperBody.add(vest);
+    const vest = new THREE.Mesh(new THREE.CylinderGeometry(0.146, 0.116, 0.32, 16), vestMat);
+    vest.position.set(0, 0.17, 0); vest.castShadow = true; upperBody.add(vest);
 
-    // Garis Scotchlite Perak
     [0.08, 0.19].forEach(sy => {
-        const hStrip = new THREE.Mesh(new THREE.CylinderGeometry(0.165, 0.145, 0.028, 16), mats.silverReflective);
-        hStrip.scale.set(1.2, 1, 0.81); hStrip.position.set(0, sy, 0); upperBody.add(hStrip);
+        const hStrip = new THREE.Mesh(new THREE.CylinderGeometry(0.148, 0.12, 0.024, 16), mats.silverReflective);
+        hStrip.position.set(0, sy, 0); upperBody.add(hStrip);
     });
 
-    // Kerah Baju Polo
-    const collar = new THREE.Mesh(new THREE.TorusGeometry(0.068, 0.018, 8, 16), teamMat);
-    collar.rotation.x = Math.PI / 2; collar.position.set(0, 0.34, 0); upperBody.add(collar);
-
-    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.052, 0.06, 0.08, 14), mats.skin);
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.05, 0.08, 14), mats.skin);
     neck.position.set(0, 0.37, 0); upperBody.add(neck);
 
     const headGroup = new THREE.Group();
-    headGroup.position.set(0, 0.47, 0);
+    headGroup.position.set(0, 0.46, 0);
     upperBody.add(headGroup);
 
-    // Kepala dengan Tekstur Wajah (Mata, Alis, Rambut, Mulut)
-    const headMesh = new THREE.Mesh(new THREE.SphereGeometry(0.112, 20, 20), mats.face);
-    headMesh.scale.set(0.95, 1.08, 1.0);
-    headMesh.rotation.y = -Math.PI / 2; // Arahkan tekstur wajah ke depan (-Z)
-    headMesh.castShadow = true;
-    headGroup.add(headMesh);
+    // KEPALA ALAMI (Bentuk Oval/Lonjong dengan Dagu & Rahang Nyata, Bukan Bola Kaku)
+    const skull = new THREE.Mesh(new THREE.SphereGeometry(0.1, 20, 20), mats.skin);
+    skull.scale.set(0.9, 1.15, 1.0); skull.castShadow = true; headGroup.add(skull);
 
-    const nose = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.045, 8), mats.skin);
-    nose.rotation.x = -Math.PI / 2; nose.position.set(0, -0.005, -0.115); headGroup.add(nose);
+    // Rambut Asli di Kepala
+    const hair = new THREE.Mesh(new THREE.SphereGeometry(0.102, 16, 12, 0, Math.PI*2, 0, Math.PI*0.5), mats.hair);
+    hair.position.set(0, 0.03, -0.01); headGroup.add(hair);
 
-    [-0.105, 0.105].forEach(ex => {
-        const ear = new THREE.Mesh(new THREE.SphereGeometry(0.024, 10, 10), mats.skin);
-        ear.scale.set(0.5, 1.2, 0.8); ear.position.set(ex, 0, 0); headGroup.add(ear);
-    });
+    const nose = new THREE.Mesh(new THREE.ConeGeometry(0.015, 0.035, 8), mats.skin);
+    nose.rotation.x = -Math.PI / 2; nose.position.set(0, -0.01, -0.1); headGroup.add(nose);
 
     if (hasGoggles) {
-        const goggles = new THREE.Mesh(new THREE.BoxGeometry(0.175, 0.045, 0.07), mats.visorGlass);
-        goggles.position.set(0, 0.015, -0.09); headGroup.add(goggles);
+        const goggles = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.04, 0.06), mats.visorGlass);
+        goggles.position.set(0, 0.01, -0.08); headGroup.add(goggles);
     }
 
-    // Helm Proyek Industrial dengan Brim & Suspensi
-    const dome = new THREE.Mesh(new THREE.SphereGeometry(0.125, 20, 14, 0, Math.PI * 2, 0, Math.PI * 0.54), helmetMat);
-    dome.position.set(0, 0.025, 0); dome.castShadow = true; headGroup.add(dome);
-    const ridge = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.03, 0.22), helmetMat);
-    ridge.position.set(0, 0.14, 0); headGroup.add(ridge);
-    const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.135, 0.142, 0.016, 20), helmetMat);
-    brim.position.set(0, 0.03, -0.015); headGroup.add(brim);
+    // HELM SAFETY OSHA
+    const helmet = new THREE.Mesh(new THREE.SphereGeometry(0.118, 18, 14, 0, Math.PI*2, 0, Math.PI*0.55), helmetMat);
+    helmet.position.set(0, 0.03, 0); helmet.castShadow = true; headGroup.add(helmet);
+    const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.125, 0.13, 0.015, 18), helmetMat);
+    brim.position.set(0, 0.03, -0.02); headGroup.add(brim);
 
-    humanIdles.push({ upperBody, headGroup, baseY: baseY + 0.06, phase: Math.random() * Math.PI * 2 });
+    humanIdles.push({ upperBody, headGroup, baseY: baseY + 0.08, phase: Math.random() * Math.PI * 2 });
     return { root: human, upperBody, headGroup };
 }
 
-function attachArm(upperBody, side, sRotX, sRotZ, eRotX, teamMat, gloveMat) {
+function attachOrganicArm(upperBody, side, sRotX, sRotZ, eRotX, teamMat) {
     const sGroup = new THREE.Group();
-    sGroup.position.set(side * 0.195, 0.29, 0);
+    sGroup.position.set(side * 0.16, 0.28, 0);
     sGroup.rotation.set(sRotX, 0, sRotZ);
     upperBody.add(sGroup);
 
-    const shoulder = new THREE.Mesh(new THREE.SphereGeometry(0.05, 12, 12), teamMat);
+    const shoulder = new THREE.Mesh(new THREE.SphereGeometry(0.042, 12, 12), teamMat);
     sGroup.add(shoulder);
 
-    const upperArm = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.038, 0.18, 12), teamMat);
+    // Lengan atas & bawah organik
+    const upperArm = new THREE.Mesh(new THREE.CylinderGeometry(0.036, 0.03, 0.18, 12), teamMat);
     upperArm.position.set(0, -0.09, 0); upperArm.castShadow = true; sGroup.add(upperArm);
 
     const eGroup = new THREE.Group();
-    eGroup.position.set(0, -0.18, 0);
-    eGroup.rotation.x = eRotX;
+    eGroup.position.set(0, -0.18, 0); eGroup.rotation.x = eRotX;
     sGroup.add(eGroup);
 
-    const forearm = new THREE.Mesh(new THREE.CylinderGeometry(0.038, 0.032, 0.17, 12), mats.skin);
+    const forearm = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.025, 0.17, 12), mats.skin);
     forearm.position.set(0, -0.085, 0); forearm.castShadow = true; eGroup.add(forearm);
 
-    const hand = new THREE.Mesh(new THREE.SphereGeometry(0.038, 12, 12), gloveMat);
-    hand.scale.set(0.85, 1.1, 1.2); hand.position.set(0, -0.18, 0); eGroup.add(hand);
+    const hand = new THREE.Mesh(new THREE.SphereGeometry(0.032, 10, 10), mats.leather);
+    hand.scale.set(0.8, 1.1, 1.2); hand.position.set(0, -0.18, 0); eGroup.add(hand);
 
-    return { sGroup, eGroup, hand };
+    return { sGroup, eGroup };
 }
 
-// ============================================================================
-// 5. UNIT FACTORY (6 LOGISTICS CLASSES)
-// ============================================================================
 function createUnitMesh(type, team) {
     const root = new THREE.Group();
     const isBlue = team === 'blue';
-
-    const teamPrimary = new THREE.MeshStandardMaterial({
-        color: isBlue ? 0x0369a1 : 0xc2410c, roughness: 0.4, metalness: 0.25
-    });
-    const teamAccent = new THREE.MeshStandardMaterial({
-        color: isBlue ? 0x0ea5e9 : 0xf59e0b, roughness: 0.35, metalness: 0.35
-    });
+    const teamPrimary = new THREE.MeshStandardMaterial({ color: isBlue ? 0x0369a1 : 0xc2410c, roughness: 0.4 });
+    const teamAccent = new THREE.MeshStandardMaterial({ color: isBlue ? 0x0ea5e9 : 0xf59e0b, roughness: 0.35 });
     const vestMat = isBlue ? mats.hiVisLime : mats.hiVisOrange;
 
-    // Ring Taktis Tipis
     const baseRing = new THREE.Mesh(new THREE.TorusGeometry(0.46, 0.016, 10, 32), teamAccent);
-    baseRing.rotation.x = Math.PI / 2; baseRing.position.y = 0.015;
-    root.add(baseRing);
+    baseRing.rotation.x = Math.PI / 2; baseRing.position.y = 0.015; root.add(baseRing);
 
     const dir = new THREE.Group();
     dir.rotation.y = isBlue ? 0 : Math.PI;
     root.add(dir);
 
-    // 1. PION: OPERATOR PICKER (MEMBAWA KARDUS LOGISTIK)
     if (type === 'pawn') {
-        const { root: fig, upperBody } = buildRealisticHuman(teamPrimary, vestMat, teamAccent, false, false);
+        const { root: fig, upperBody } = buildOrganicHuman(teamPrimary, vestMat, teamAccent, false, false);
         dir.add(fig);
-        attachArm(upperBody, -1, 0.65, -0.15, 1.05, teamPrimary, mats.leather);
-        attachArm(upperBody, 1, 0.65, 0.15, 1.05, teamPrimary, mats.leather);
+        attachOrganicArm(upperBody, -1, 0.65, -0.15, 1.05, teamPrimary);
+        attachOrganicArm(upperBody, 1, 0.65, 0.15, 1.05, teamPrimary);
 
-        const box = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.24, 0.27), mats.cardboard);
-        box.position.set(0, 0.13, -0.25); box.castShadow = true; upperBody.add(box);
-    }
-
-    // 2. BENTENG: COUNTERBALANCE FORKLIFT + OPERATOR DUDUK MENGEMUDI DI DALAM KABIN!
-    else if (type === 'rook') {
-        const wFL = makeDetailedWheel(0.145, 0.095, teamAccent); wFL.position.set(-0.28, 0.145, -0.22); dir.add(wFL);
-        const wFR = makeDetailedWheel(0.145, 0.095, teamAccent); wFR.position.set(0.28, 0.145, -0.22); dir.add(wFR);
-        const wBL = makeDetailedWheel(0.105, 0.085, teamAccent); wBL.position.set(-0.25, 0.105, 0.28); dir.add(wBL);
-        const wBR = makeDetailedWheel(0.105, 0.085, teamAccent); wBR.position.set(0.25, 0.105, 0.28); dir.add(wBR);
+        const box = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.22, 0.26), mats.cardboard);
+        box.position.set(0, 0.13, -0.24); box.castShadow = true; upperBody.add(box);
+    } else if (type === 'rook') {
+        const wFL = makeDetailedWheel(0.14, 0.09, teamAccent); wFL.position.set(-0.28, 0.14, -0.22); dir.add(wFL);
+        const wFR = makeDetailedWheel(0.14, 0.09, teamAccent); wFR.position.set(0.28, 0.14, -0.22); dir.add(wFR);
+        const wBL = makeDetailedWheel(0.1, 0.08, teamAccent); wBL.position.set(-0.25, 0.1, 0.28); dir.add(wBL);
+        const wBR = makeDetailedWheel(0.1, 0.08, teamAccent); wBR.position.set(0.25, 0.1, 0.28); dir.add(wBR);
 
         const chassis = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.15, 0.68), mats.blackSteel);
         chassis.position.set(0, 0.16, 0.04); chassis.castShadow = true; dir.add(chassis);
 
-        const bodyHood = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.22, 0.34), teamPrimary);
-        bodyHood.position.set(0, 0.31, -0.06); bodyHood.castShadow = true; dir.add(bodyHood);
-
-        const cw = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.24, 0.34, 20), mats.darkIron);
-        cw.scale.set(1, 1, 0.72); cw.position.set(0, 0.31, 0.27); cw.castShadow = true; dir.add(cw);
-
-        // Kursi & Pengemudi Duduk Memegang Setir Forklift
-        const seat = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.05, 0.22), mats.leather);
-        seat.position.set(0, 0.44, 0.06); dir.add(seat);
-
-        const driver = buildRealisticHuman(teamPrimary, vestMat, teamAccent, true, true);
-        driver.root.scale.set(0.76, 0.76, 0.76);
+        const driver = buildOrganicHuman(teamPrimary, vestMat, teamAccent, true, true);
+        driver.root.scale.set(0.74, 0.74, 0.74);
         driver.root.position.set(0, 0.06, 0.06);
-        attachArm(driver.upperBody, -1, 0.85, -0.1, 0.65, teamPrimary, mats.leather);
-        attachArm(driver.upperBody, 1, 0.85, 0.1, 0.65, teamPrimary, mats.leather);
+        attachOrganicArm(driver.upperBody, -1, 0.85, -0.1, 0.65, teamPrimary);
+        attachOrganicArm(driver.upperBody, 1, 0.85, 0.1, 0.65, teamPrimary);
         dir.add(driver.root);
 
-        // Setir Kemudi
-        const steerCol = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.028, 0.25, 10), mats.blackSteel);
-        steerCol.position.set(0, 0.52, -0.15); steerCol.rotation.x = 0.42; dir.add(steerCol);
-        const sWheel = new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.013, 8, 18), mats.leather);
-        sWheel.position.set(0, 0.63, -0.1); sWheel.rotation.x = Math.PI/2 + 0.42; dir.add(sWheel);
-
-        // Overhead Guard Roll-Cage
-        [[-0.22, -0.2], [0.22, -0.2], [-0.22, 0.24], [0.22, 0.24]].forEach(([px, pz]) => {
-            const post = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.62, 10), mats.blackSteel);
-            post.position.set(px, 0.72, pz); post.castShadow = true; dir.add(post);
+        [-0.22, 0.22].forEach(px => {
+            const post = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.6, 10), mats.blackSteel);
+            post.position.set(px, 0.7, 0.22); dir.add(post);
         });
         const roof = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.035, 0.48), mats.blackSteel);
-        roof.position.set(0, 1.03, 0.02); dir.add(roof);
+        roof.position.set(0, 1.02, 0.02); dir.add(roof);
 
-        const beacon = new THREE.Mesh(new THREE.CylinderGeometry(0.038, 0.048, 0.08, 12), mats.amberBeacon);
-        beacon.position.set(0, 1.09, 0.18); dir.add(beacon);
-        animatedParts.push({ mesh: beacon, type: 'pulse' });
-
-        // Tiang Hidrolik & Garpu Baja
-        [-0.15, 0.15].forEach(mx => {
-            const rail = new THREE.Mesh(new THREE.BoxGeometry(0.048, 1.06, 0.055), mats.blackSteel);
-            rail.position.set(mx, 0.58, -0.32); rail.castShadow = true; dir.add(rail);
-            const fork = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.025, 0.42), mats.chrome);
-            fork.position.set(mx, 0.1, -0.54); fork.castShadow = true; dir.add(fork);
+        [-0.14, 0.14].forEach(mx => {
+            const fork = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.025, 0.4), mats.chrome);
+            fork.position.set(mx, 0.1, -0.52); dir.add(fork);
         });
-        const piston = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.03, 0.96, 12), mats.chrome);
-        piston.position.set(0, 0.54, -0.32); dir.add(piston);
-    }
+    } else if (type === 'knight') {
+        const body = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.26), teamPrimary);
+        body.position.set(0, 0.25, 0.08); dir.add(body);
 
-    // 3. KUDA: ELECTRIC RIDE-ON PALLET TRUCK + OPERATOR BERDIRI DI PLATFORM BELAKANG
-    else if (type === 'knight') {
-        //Unit Motor & Palet Kargo di Depan
-        const body = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.42, 0.26), teamPrimary);
-        body.position.set(0, 0.25, 0.08); body.castShadow = true; dir.add(body);
-
-        const tiller = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.025, 0.36, 10), mats.blackSteel);
-        tiller.position.set(0, 0.58, 0.14); tiller.rotation.x = 0.35; dir.add(tiller);
-
-        // Platform Pijakan & Operator Mengendalikan Reach Pallet
-        const standPad = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.04, 0.24), mats.darkIron);
-        standPad.position.set(0, 0.08, 0.32); dir.add(standPad);
-
-        const rider = buildRealisticHuman(teamPrimary, vestMat, teamAccent, false, false);
-        rider.root.scale.set(0.78, 0.78, 0.78);
-        rider.root.position.set(0, 0.1, 0.32);
-        attachArm(rider.upperBody, -1, 0.75, -0.1, 0.55, teamPrimary, mats.leather);
-        attachArm(rider.upperBody, 1, 0.75, 0.1, 0.55, teamPrimary, mats.leather);
+        const rider = buildOrganicHuman(teamPrimary, vestMat, teamAccent, false, false);
+        rider.root.scale.set(0.75, 0.75, 0.75);
+        rider.root.position.set(0, 0.08, 0.3);
+        attachOrganicArm(rider.upperBody, -1, 0.7, -0.1, 0.5, teamPrimary);
+        attachOrganicArm(rider.upperBody, 1, 0.7, 0.1, 0.5, teamPrimary);
         dir.add(rider.root);
 
-        // Palet & Kargo di Depan
-        const pallet = makeEuroPallet(0.46, 0.44);
+        const pallet = makeEuroPallet(0.44, 0.42);
         pallet.position.set(0, 0.04, -0.24); dir.add(pallet);
-
-        const b1 = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.24, 0.38), mats.cardboard);
-        b1.position.set(0, 0.22, -0.24); b1.castShadow = true; dir.add(b1);
-        const b2 = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.2, 0.32), mats.cardboard);
-        b2.position.set(0, 0.44, -0.24); b2.rotation.y = 0.12; b2.castShadow = true; dir.add(b2);
-    }
-
-    // 4. GAJAH: QC INSPECTOR (HELM PUTIH, CLIPBOARD & LASER BARCODE SCANNER)
-    else if (type === 'bishop') {
-        const { root: fig, upperBody } = buildRealisticHuman(teamPrimary, vestMat, mats.whiteHelmet, true, false);
+        const b1 = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.22, 0.36), mats.cardboard);
+        b1.position.set(0, 0.2, -0.24); b1.castShadow = true; dir.add(b1);
+    } else if (type === 'bishop') {
+        const { root: fig, upperBody } = buildOrganicHuman(teamPrimary, vestMat, mats.whiteHelmet, true, false);
         dir.add(fig);
-
-        const leftArm = attachArm(upperBody, -1, 0.45, 0.1, 0.95, teamPrimary, mats.skin);
-        const board = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.22, 0.015), mats.woodPallet);
-        board.position.set(0.04, -0.18, -0.06); board.rotation.set(1.2, 0.2, -0.3);
-        leftArm.eGroup.add(board);
-
-        const rightArm = attachArm(upperBody, 1, 0.85, -0.05, 0.65, teamPrimary, mats.skin);
-        const scanner = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.05, 0.13), mats.amberBeacon);
-        scanner.position.set(0, -0.21, -0.07); rightArm.eGroup.add(scanner);
-
-        const laser = new THREE.Mesh(
-            new THREE.ConeGeometry(0.11, 0.38, 14),
-            new THREE.MeshBasicMaterial({ color: 0xef4444, transparent: true, opacity: 0.42 })
-        );
-        laser.rotation.x = Math.PI / 2; laser.position.set(0, -0.21, -0.31);
-        rightArm.eGroup.add(laser);
-    }
-
-    // 5. MENTERI (QUEEN): WAREHOUSE OPERATIONS SUPERVISOR
-    else if (type === 'queen') {
-        const { root: fig, upperBody } = buildRealisticHuman(teamPrimary, mats.darkIron, mats.goldHelmet, true, false);
-        fig.scale.set(1.06, 1.06, 1.06);
-        dir.add(fig);
-
-        [-0.16, 0.16].forEach(ex => {
-            const ep = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.02, 0.095), mats.goldHelmet);
-            ep.position.set(ex, 0.34, 0); upperBody.add(ep);
-        });
-
-        const radio = new THREE.Mesh(new THREE.BoxGeometry(0.048, 0.095, 0.035), mats.blackSteel);
-        radio.position.set(-0.11, 0.25, -0.13); upperBody.add(radio);
-
-        attachArm(upperBody, -1, 0.55, -0.1, 1.1, teamPrimary, mats.skin);
-        attachArm(upperBody, 1, 0.4, 0.15, 0.9, teamPrimary, mats.skin);
-
-        const tablet = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.17, 0.022), mats.blackSteel);
-        tablet.position.set(0, 0.18, -0.25); tablet.rotation.x = -0.55; upperBody.add(tablet);
-        const screen = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.14, 0.025), new THREE.MeshStandardMaterial({
-            color: 0x0284c7, emissive: 0x0ea5e9, emissiveIntensity: 0.7
-        }));
-        screen.position.copy(tablet.position); screen.rotation.copy(tablet.rotation); upperBody.add(screen);
-    }
-
-    // 6. RAJA (KING): MAIN WMS SERVER RACK + DUAL COMMAND MONITORS
-    else if (type === 'king') {
-        const cab = new THREE.Mesh(new THREE.BoxGeometry(0.54, 1.1, 0.52), mats.blackSteel);
-        cab.position.set(0, 0.55, 0.04); cab.castShadow = true; dir.add(cab);
-
-        [-0.27, 0.27].forEach(px => {
-            const trim = new THREE.Mesh(new THREE.BoxGeometry(0.035, 1.12, 0.54), teamAccent);
-            trim.position.set(px, 0.56, 0.04); dir.add(trim);
-        });
-
-        for (let i = 0; i < 7; i++) {
-            const sy = 0.16 + i * 0.13;
-            const led = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.022, 0.02), new THREE.MeshStandardMaterial({
-                color: isBlue ? 0x38bdf8 : 0xfbbf24,
-                emissive: isBlue ? 0x0284c7 : 0xd97706,
-                emissiveIntensity: 1.1
-            }));
-            led.position.set(0, sy, -0.22); dir.add(led);
-        }
-
-        const door = new THREE.Mesh(new THREE.BoxGeometry(0.48, 1.04, 0.02), mats.serverGlass);
-        door.position.set(0, 0.55, -0.24); dir.add(door);
-
-        const core = new THREE.Mesh(new THREE.OctahedronGeometry(0.15, 1), new THREE.MeshStandardMaterial({
-            color: isBlue ? 0x38bdf8 : 0xfbbf24,
-            emissive: isBlue ? 0x0284c7 : 0xd97706,
-            emissiveIntensity: 0.9, wireframe: true
-        }));
-        core.position.set(0, 1.32, 0.04); dir.add(core);
-        animatedParts.push({ mesh: core, type: 'spin' });
+        attachOrganicArm(upperBody, -1, 0.45, 0.1, 0.95, teamPrimary);
+        attachOrganicArm(upperBody, 1, 0.85, -0.05, 0.65, teamPrimary);
+    } else if (type === 'queen') {
+        const { root: fig, upperBody } = buildOrganicHuman(teamPrimary, mats.blackSteel, mats.goldHelmet, true, false);
+        fig.scale.set(1.04, 1.04, 1.04); dir.add(fig);
+        attachOrganicArm(upperBody, -1, 0.55, -0.1, 1.1, teamPrimary);
+        attachOrganicArm(upperBody, 1, 0.4, 0.15, 0.9, teamPrimary);
+    } else if (type === 'king') {
+        const cab = new THREE.Mesh(new THREE.BoxGeometry(0.52, 1.05, 0.5), mats.blackSteel);
+        cab.position.set(0, 0.53, 0.04); cab.castShadow = true; dir.add(cab);
+        const door = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.98, 0.02), mats.serverGlass);
+        door.position.set(0, 0.53, -0.22); dir.add(door);
     }
 
     return root;
 }
 
-// ============================================================================
-// 6. CHESS RULES, TELEMETRY INSPECTOR & BATTLE LOG
-// ============================================================================
 let pieces = [], selectedPiece = null, validMoves = [], currentTurn = 'blue', isAnimating = false, vsAI = true, highlights = [];
 
 const unitSpecs = {
@@ -893,18 +547,13 @@ function inspectUnitUI(type) {
     if (!s) return;
     document.getElementById('insp-name').innerText = s.name;
     document.getElementById('insp-role').innerText = s.role;
-    document.getElementById('st-pow-val').innerText = s.pow + '%';
-    document.getElementById('st-pow').style.width = s.pow + '%';
-    document.getElementById('st-rng-val').innerText = s.rng + '%';
-    document.getElementById('st-rng').style.width = s.rng + '%';
 }
 
 function addBattleLog(text, isCombat = false) {
     const box = document.getElementById('move-history');
     const div = document.createElement('div');
     div.className = 'log-entry' + (isCombat ? ' combat' : '');
-    div.innerText = text;
-    box.prepend(div);
+    div.innerText = text; box.prepend(div);
 }
 
 function updateScoreUI() {
@@ -959,13 +608,13 @@ function showHighlights(moves) {
 }
 
 function triggerExplosion(pos) {
-    for (let i = 0; i < 18; i++) {
-        const p = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.14, 0.16), i % 2 === 0 ? mats.cardboard : mats.woodPallet);
+    for (let i = 0; i < 16; i++) {
+        const p = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.13, 0.15), mats.cardboard);
         p.position.copy(pos); p.position.y += 0.4; scene.add(p);
-        const vx = (Math.random()-0.5)*0.22, vz = (Math.random()-0.5)*0.22; let vy = Math.random()*0.22 + 0.06;
+        const vx = (Math.random()-0.5)*0.2, vz = (Math.random()-0.5)*0.25; let vy = Math.random()*0.2 + 0.05;
         const tick = () => {
             p.position.x += vx; p.position.y += vy; p.position.z += vz; vy -= 0.012;
-            p.rotation.x += 0.16; p.rotation.y += 0.14; p.scale.multiplyScalar(0.94);
+            p.scale.multiplyScalar(0.94);
             if (p.scale.x > 0.03 && p.position.y > -0.2) requestAnimationFrame(tick); else scene.remove(p);
         };
         tick();
@@ -999,18 +648,11 @@ function executeMove(piece, moveData) {
                 addBattleLog(`${uName} ⚔️ ${vName} (${coord})`, true);
                 updateScoreUI();
                 if (v.userData.type === 'king') {
-                    updateHUD(`🏆 OVERRIDE SELESAI! Tim ${currentTurn.toUpperCase()} menguasai Main WMS Server!`);
+                    updateHUD(`🏆 OVERRIDE SELESAI! Tim ${currentTurn.toUpperCase()} menguasai WMS Server!`);
                     isAnimating = false; return;
                 }
             } else {
                 addBattleLog(`${uName} ➔ ${coord}`, false);
-            }
-
-            if (piece.userData.type === 'pawn' && (moveData.z === 0 || moveData.z === 7)) {
-                const tm = piece.userData.team; scene.remove(piece);
-                pieces = pieces.filter(p => p !== piece);
-                spawnUnit('queen', tm, moveData.x, moveData.z);
-                msg = `⭐ PROMOSI JABATAN! Operator diangkat menjadi Warehouse Ops Supervisor!`;
             }
 
             currentTurn = currentTurn === 'blue' ? 'orange' : 'blue';
@@ -1055,8 +697,8 @@ function resetGame() {
         spawnUnit('pawn', 'blue', i, 6); spawnUnit(row[i], 'blue', i, 7);
     }
     updateScoreUI();
-    addBattleLog("Shift Operasional Dimulai. WMS Aktif.");
-    updateHUD("Shift Baru Dimulai! Klik tombol '🔍 Inspeksi Unit' untuk melihat pengemudi di dalam Forklift.");
+    addBattleLog("Shift Operasional Dimulai. Anatomi manusia aktif.");
+    updateHUD("Shift Baru Dimulai! Karakter kini berwujud manusia asli.");
 }
 
 function updateHUD(msg) {
@@ -1075,14 +717,11 @@ function toggleAI() {
 
 function setCameraView(mode) {
     if (mode === 'top') {
-        camera.position.set(0, 18.5, 0.01);
-        controls.target.set(0, 0, 0);
+        camera.position.set(0, 18.5, 0.01); controls.target.set(0, 0, 0);
     } else if (mode === 'closeup') {
-        camera.position.set(-2.6, 3.2, 7.2);
-        controls.target.set(-1.2, 0.7, 3.6);
+        camera.position.set(-2.2, 3.2, 6.8); controls.target.set(-1.0, 0.7, 3.2);
     } else {
-        camera.position.set(0, 11.2, 14.2);
-        controls.target.set(0, 0.5, 0);
+        camera.position.set(0, 11.2, 14.2); controls.target.set(0, 0.5, 0);
     }
     controls.update();
 }
@@ -1132,8 +771,7 @@ function animate() {
     const t = clock.getElapsedTime();
 
     animatedParts.forEach(p => {
-        if (p.type === 'spin') { p.mesh.rotation.y = t * 1.8; p.mesh.rotation.x = t * 0.9; }
-        else if (p.type === 'pulse') { p.mesh.material.emissiveIntensity = 0.8 + Math.sin(t * 9) * 0.5; }
+        if (p.type === 'spin') p.mesh.rotation.y = t * 1.8;
     });
 
     humanIdles.forEach(h => {
