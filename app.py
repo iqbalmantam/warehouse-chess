@@ -2,8 +2,8 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 st.set_page_config(
-    page_title="WAREHOUSE COMMAND: HUMANS VS ROGUE AI",
-    page_icon="🤖",
+    page_title="WAREHOUSE COMMAND - Developed by iqbalmantam",
+    page_icon="♟️",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
@@ -22,7 +22,7 @@ HTML_CODE = r'''<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Warehouse Command: Humans vs Rogue AI</title>
+<title>Warehouse Command - Developed by iqbalmantam</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
 <style>
     * { box-sizing: border-box; user-select: none; }
@@ -40,6 +40,38 @@ HTML_CODE = r'''<!DOCTYPE html>
     .loader-sub { font-size: 14px; color: #94a3b8; letter-spacing: 1.5px; margin-bottom: 24px; }
     .progress-wrap { width: 340px; height: 8px; background: #1e293b; border-radius: 4px; overflow: hidden; border: 1px solid rgba(56,189,248,0.4); }
     #progress-bar { width: 10%; height: 100%; background: linear-gradient(90deg, #38bdf8, #ef4444); transition: width 0.25s; }
+    .loader-credit { margin-top: 22px; font-family: 'Orbitron', sans-serif; font-size: 12px; letter-spacing: 3px; color: #f59e0b; text-transform: uppercase; font-weight: 800; }
+
+    /* WATERMARK BADGE (ALWAYS VISIBLE AT BOTTOM-RIGHT) */
+    #dev-watermark {
+        position: fixed; bottom: 16px; right: 20px; z-index: 40;
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.92) 0%, rgba(2, 6, 23, 0.96) 100%);
+        border: 1px solid rgba(245, 158, 11, 0.45);
+        border-right: 4px solid #f59e0b;
+        padding: 7px 16px; border-radius: 6px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.8), 0 0 15px rgba(245, 158, 11, 0.15);
+        backdrop-filter: blur(8px);
+        display: flex; align-items: center; gap: 10px;
+        pointer-events: auto; text-decoration: none;
+        transition: all 0.25s ease;
+    }
+    #dev-watermark:hover {
+        border-color: #38bdf8; border-right-color: #38bdf8;
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(56, 189, 248, 0.3);
+    }
+    .wm-dot {
+        width: 7px; height: 7px; border-radius: 50%; background: #f59e0b;
+        box-shadow: 0 0 8px #f59e0b;
+    }
+    .wm-text {
+        font-family: 'Orbitron', sans-serif; font-size: 11px; font-weight: 800;
+        letter-spacing: 2px; color: #cbd5e1; text-transform: uppercase;
+    }
+    .wm-text span {
+        color: #f59e0b; font-weight: 900;
+        text-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+    }
 
     /* CINEMATIC LETTERBOX & FIGHTING HUD */
     .cine-bar { position: fixed; left: 0; right: 0; height: 0px; background: #020408; z-index: 25; transition: height 0.4s cubic-bezier(0.16, 1, 0.3, 1); pointer-events: none; }
@@ -142,9 +174,9 @@ HTML_CODE = r'''<!DOCTYPE html>
     .log-entry.combat { border-left-color: #ef4444; background: rgba(127, 29, 29, 0.35); color: #fca5a5; font-weight: 700; }
 
     #bottom-ticker {
-        position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
+        position: absolute; bottom: 16px; left: 42%; transform: translateX(-50%);
         background: rgba(5, 9, 18, 0.95); border: 1px solid rgba(56, 189, 248, 0.35);
-        padding: 8px 24px; border-radius: 24px; display: flex; align-items: center; gap: 10px; z-index: 30; font-size: 13px; font-weight: 600;
+        padding: 8px 22px; border-radius: 24px; display: flex; align-items: center; gap: 10px; z-index: 30; font-size: 13px; font-weight: 600;
     }
     .pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 10px #22c55e; }
 </style>
@@ -163,9 +195,16 @@ HTML_CODE = r'''<!DOCTYPE html>
 <body>
     <div id="loading-overlay">
         <div class="loader-title">HUMANS VS ROGUE AI AUTOMATION</div>
-        <div id="loader-status" class="loader-sub">Merakit Faksi Manusia (.GLB) & Faksi Robot Sindikat Otomasi...</div>
+        <div id="loader-status" class="loader-sub">Menyiapkan Papan Catur Klasik Hitam-Putih & Karakter 3D...</div>
         <div class="progress-wrap"><div id="progress-bar"></div></div>
+        <div class="loader-credit">⚡ DEVELOPED BY IQBALMANTAM ⚡</div>
     </div>
+
+    <!-- WATERMARK RESMI DEVELOPED BY IQBALMANTAM -->
+    <a id="dev-watermark" href="https://github.com/iqbalmantam/warehouse-chess" target="_blank" title="Official Repository by iqbalmantam">
+        <div class="wm-dot"></div>
+        <div class="wm-text">DEVELOPED BY <span>IQBALMANTAM</span></div>
+    </a>
 
     <div id="cine-top" class="cine-bar"></div>
     <div id="cine-bot" class="cine-bar"></div>
@@ -185,10 +224,10 @@ HTML_CODE = r'''<!DOCTYPE html>
 
     <div id="top-bar">
         <div class="brand-cluster">
-            <div class="brand-emblem">VS</div>
+            <div class="brand-emblem">IM</div>
             <div class="brand-title">
                 <h1>WAREHOUSE COMMAND: ASYMMETRIC WARFARE</h1>
-                <span>🔵 Human Logistics Corps vs 🔴 Apex Rogue AI Machines</span>
+                <span>🔵 Human Corps vs 🔴 Rogue AI • Developed by iqbalmantam</span>
             </div>
         </div>
 
@@ -201,7 +240,7 @@ HTML_CODE = r'''<!DOCTYPE html>
         <div class="toolbar">
             <button id="btn-ai" class="t-btn active" onclick="toggleAI()">🤖 Lawan AI</button>
             <button class="t-btn epic-btn" onclick="demoCombat()">🔥 Duel Manusia vs Robot!</button>
-            <button class="t-btn" onclick="setCameraView('enemy')">👁️ Zoom Faksi Lawan (Robot)</button>
+            <button class="t-btn" onclick="setCameraView('enemy')">👁️ Zoom Faksi Lawan</button>
             <button class="t-btn" onclick="setCameraView('perspective')">🎥 Kamera Arena</button>
             <button class="t-btn" onclick="resetGame()">🔄 Reset</button>
         </div>
@@ -231,7 +270,7 @@ HTML_CODE = r'''<!DOCTYPE html>
 
     <div id="bottom-ticker">
         <div class="pulse-dot"></div>
-        <div id="action-log">Karakter lawan kini 100% berbeda bentuk (Pasukan Robot, Spider-Tank, Drone Udara & Goliath Mech)!</div>
+        <div id="action-log">Warehouse Command 3D • Developed by iqbalmantam. Pilih bidak Biru untuk melangkah!</div>
     </div>
 
     <div id="canvas-container"></div>
@@ -242,8 +281,8 @@ HTML_CODE = r'''<!DOCTYPE html>
 // ============================================================================
 const container = document.getElementById('canvas-container');
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x03060c);
-scene.fog = new THREE.FogExp2(0x03060c, 0.013);
+scene.background = new THREE.Color(0x060a12);
+scene.fog = new THREE.FogExp2(0x060a12, 0.012);
 
 const camera = new THREE.PerspectiveCamera(36, window.innerWidth / window.innerHeight, 0.1, 200);
 camera.position.set(0, 10.6, 13.4);
@@ -254,7 +293,7 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 0.98;
+renderer.toneMappingExposure = 0.95;
 renderer.outputEncoding = THREE.sRGBEncoding;
 container.appendChild(renderer.domElement);
 
@@ -263,7 +302,7 @@ const maxAnisotropy = renderer.capabilities.getMaxAnisotropy();
 const renderScene = new THREE.RenderPass(scene, camera);
 const bloomPass = new THREE.UnrealBloomPass(
     new THREE.Vector2(window.innerWidth, window.innerHeight),
-    0.48, 0.35, 0.78
+    0.38, 0.32, 0.92
 );
 const composer = new THREE.EffectComposer(renderer);
 composer.addPass(renderScene);
@@ -277,10 +316,10 @@ controls.minDistance = 2.2;
 controls.maxDistance = 24;
 controls.target.set(0, 0.6, 0);
 
-const hemiLight = new THREE.HemisphereLight(0xdbeafe, 0x090d16, 0.85);
+const hemiLight = new THREE.HemisphereLight(0xffffff, 0x1e293b, 0.85);
 scene.add(hemiLight);
 
-const mainLight = new THREE.DirectionalLight(0xfff7ed, 1.65);
+const mainLight = new THREE.DirectionalLight(0xfffbeb, 1.35);
 mainLight.position.set(8, 19, 11);
 mainLight.castShadow = true;
 mainLight.shadow.mapSize.set(2048, 2048);
@@ -289,43 +328,78 @@ Object.assign(mainLight.shadow.camera, { left: -d, right: d, top: d, bottom: -d,
 mainLight.shadow.bias = -0.0004;
 scene.add(mainLight);
 
-const blueRim = new THREE.PointLight(0x38bdf8, 1.5, 26); blueRim.position.set(-9, 6, 9); scene.add(blueRim);
-const redRim = new THREE.PointLight(0xef4444, 1.6, 26); redRim.position.set(9, 6, -9); scene.add(redRim);
+const blueRim = new THREE.PointLight(0x38bdf8, 1.1, 26); blueRim.position.set(-9, 6, 9); scene.add(blueRim);
+const redRim = new THREE.PointLight(0xef4444, 1.1, 26); redRim.position.set(9, 6, -9); scene.add(redRim);
 
 const duelLight = new THREE.PointLight(0xffffff, 0, 12);
 scene.add(duelLight);
 
 // ============================================================================
-// 2. ARENA PAPAN CATUR GUDANG
+// 2. PAPAN CATUR KLASIK HITAM & PUTIH + PLAKAT 3D "DEVELOPED BY IQBALMANTAM"
 // ============================================================================
 function makeTileTex(isDark, lbl) {
     const c = document.createElement('canvas'); c.width = 512; c.height = 512;
     const ctx = c.getContext('2d');
-    ctx.fillStyle = isDark ? '#080e1a' : '#121d30'; ctx.fillRect(0,0,512,512);
-    ctx.strokeStyle = isDark ? 'rgba(30,41,59,0.5)' : 'rgba(51,65,85,0.5)';
+
+    ctx.fillStyle = isDark ? '#18181b' : '#f1f5f9';
+    ctx.fillRect(0, 0, 512, 512);
+
+    ctx.strokeStyle = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(15,23,42,0.05)';
     ctx.lineWidth = 2;
-    for(let i=64; i<512; i+=64) {
-        ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,512); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(512,i); ctx.stroke();
+    for(let i = 64; i < 512; i += 64) {
+        ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, 512); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(512, i); ctx.stroke();
     }
-    ctx.strokeStyle = isDark ? '#17253b' : '#263a59'; ctx.lineWidth = 14; ctx.strokeRect(7,7,498,498);
-    ctx.fillStyle = 'rgba(239, 68, 68, 0.45)';
-    ctx.fillRect(24,24,28,5); ctx.fillRect(24,24,5,28);
+
+    ctx.strokeStyle = isDark ? '#27272a' : '#cbd5e1';
+    ctx.lineWidth = 12;
+    ctx.strokeRect(6, 6, 500, 500);
+
+    ctx.fillStyle = isDark ? 'rgba(245, 158, 11, 0.45)' : 'rgba(2, 132, 199, 0.45)';
+    ctx.fillRect(22, 22, 26, 5); ctx.fillRect(22, 22, 5, 26);
+    ctx.fillRect(464, 22, 26, 5); ctx.fillRect(485, 22, 5, 26);
+
     if (lbl) {
-        ctx.fillStyle = 'rgba(203,213,225,0.65)';
-        ctx.font = 'bold 52px Orbitron, monospace'; ctx.fillText(lbl, 34, 470);
+        ctx.fillStyle = isDark ? '#f8fafc' : '#0f172a';
+        ctx.font = 'bold 54px Orbitron, monospace';
+        ctx.fillText(lbl, 34, 470);
     }
     const tex = new THREE.CanvasTexture(c);
     tex.anisotropy = maxAnisotropy;
     return tex;
 }
 
+// Tekstur Plakat Logam Emas 3D di Bingkai Papan
+function makeCreatorPlaqueTex() {
+    const c = document.createElement('canvas'); c.width = 1024; c.height = 128;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#090d16'; ctx.fillRect(0, 0, 1024, 128);
+    ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 8; ctx.strokeRect(6, 6, 1012, 116);
+    ctx.fillStyle = '#f59e0b';
+    ctx.font = '900 42px Orbitron, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('⚡ DEVELOPED BY IQBALMANTAM ⚡', 512, 66);
+    const tex = new THREE.CanvasTexture(c);
+    tex.anisotropy = maxAnisotropy;
+    return tex;
+}
+
 const boardGroup = new THREE.Group(); scene.add(boardGroup);
-const floor = new THREE.Mesh(new THREE.PlaneGeometry(85, 85), new THREE.MeshStandardMaterial({ color: 0x03060c, roughness: 0.75 }));
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(85, 85), new THREE.MeshStandardMaterial({ color: 0x050811, roughness: 0.8 }));
 floor.rotation.x = -Math.PI/2; floor.position.y = -0.35; floor.receiveShadow = true; scene.add(floor);
 
-const base = new THREE.Mesh(new THREE.BoxGeometry(10.5, 0.35, 10.5), new THREE.MeshStandardMaterial({ color: 0x070c18, roughness: 0.3, metalness: 0.65 }));
+const base = new THREE.Mesh(new THREE.BoxGeometry(10.5, 0.35, 10.5), new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.4, metalness: 0.5 }));
 base.position.y = -0.2; base.receiveShadow = true; boardGroup.add(base);
+
+const goldBorder = new THREE.Mesh(new THREE.BoxGeometry(9.85, 0.12, 9.85), new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.3, metalness: 0.7 }));
+goldBorder.position.y = -0.02; boardGroup.add(goldBorder);
+
+// Plakat 3D "DEVELOPED BY IQBALMANTAM" di Sisi Depan & Belakang Papan Catur
+const plaqueMat = new THREE.MeshStandardMaterial({ map: makeCreatorPlaqueTex(), roughness: 0.25, metalness: 0.4 });
+const frontPlaque = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.24, 0.06), plaqueMat);
+frontPlaque.position.set(0, -0.18, 5.26);
+boardGroup.add(frontPlaque);
 
 const tileSize = 1.2, offset = 3.5 * tileSize, tiles = [], cols = ['A','B','C','D','E','F','G','H'];
 for (let x = 0; x < 8; x++) {
@@ -334,8 +408,12 @@ for (let x = 0; x < 8; x++) {
         const isDark = (x + z) % 2 === 1;
         const lbl = (z === 7) ? cols[x] : (x === 0 ? String(8 - z) : '');
         const tile = new THREE.Mesh(
-            new THREE.BoxGeometry(tileSize * 0.988, 0.1, tileSize * 0.988),
-            new THREE.MeshStandardMaterial({ map: makeTileTex(isDark, lbl), roughness: 0.34, metalness: 0.22 })
+            new THREE.BoxGeometry(tileSize * 0.99, 0.1, tileSize * 0.99),
+            new THREE.MeshStandardMaterial({
+                map: makeTileTex(isDark, lbl),
+                roughness: isDark ? 0.45 : 0.62,
+                metalness: 0.05
+            })
         );
         tile.position.set(x * tileSize - offset, 0, z * tileSize - offset);
         tile.receiveShadow = true; tile.userData = { gridX: x, gridZ: z };
@@ -407,14 +485,13 @@ function loadAllBlenderAssets() {
     });
 }
 
-// Spawn Manusia (.GLB) khusus untuk TIM BIRU (Human Logistics Corps)
 function spawnHumanCorpsGLB(scaleVal, tintHex, visorHex) {
     const wrapper = new THREE.Group();
     if (!soldierAsset) return { wrapper, setAnim: () => {} };
 
     const cloned = THREE.SkeletonUtils.clone(soldierAsset.scene);
     cloned.scale.set(scaleVal, scaleVal, scaleVal);
-    cloned.rotation.y = Math.PI; // Normalisasi menghadap +Z
+    cloned.rotation.y = Math.PI;
 
     cloned.traverse(child => {
         if (child.isMesh) {
@@ -456,14 +533,13 @@ function spawnHumanCorpsGLB(scaleVal, tintHex, visorHex) {
     return { wrapper, setAnim };
 }
 
-// Spawn Robot Android / Mech (.GLB) khusus untuk TIM LAWAN (Apex Rogue AI)
 function spawnRogueRobotGLB(scaleVal, mainColorHex, eyeGlowMat) {
     const wrapper = new THREE.Group();
     if (!mechAsset) return { wrapper, setAnim: () => {} };
 
     const cloned = THREE.SkeletonUtils.clone(mechAsset.scene);
     cloned.scale.set(scaleVal, scaleVal, scaleVal);
-    cloned.rotation.y = 0; // Native menghadap +Z
+    cloned.rotation.y = 0;
 
     cloned.traverse(c => {
         if (c.isMesh) {
@@ -480,7 +556,6 @@ function spawnRogueRobotGLB(scaleVal, mainColorHex, eyeGlowMat) {
     });
     wrapper.add(cloned);
 
-    // Pasang Inti Reaktor Merah Menyala di Dada Robot Lawan
     const chestCore = new THREE.Mesh(new THREE.SphereGeometry(0.32 * scaleVal, 12, 12), eyeGlowMat);
     chestCore.position.set(0, 1.8 * scaleVal, 0.45 * scaleVal);
     wrapper.add(chestCore);
@@ -517,9 +592,15 @@ function createUnitMesh(type, team) {
     const isBlue = team === 'blue';
     const glowMat = isBlue ? mats.neonBlue : mats.neonRed;
 
-    // Base Ring + Indikator Panah Depan (+Z)
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.46, 0.02, 12, 32), glowMat);
-    ring.rotation.x = Math.PI / 2; ring.position.y = 0.02;
+    const shadowDisc = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.47, 0.49, 0.02, 32),
+        new THREE.MeshStandardMaterial({ color: isBlue ? 0x082f49 : 0x450a0a, roughness: 0.5 })
+    );
+    shadowDisc.position.y = 0.01;
+    root.add(shadowDisc);
+
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.47, 0.022, 12, 32), glowMat);
+    ring.rotation.x = Math.PI / 2; ring.position.y = 0.025;
     root.add(ring);
 
     const dir = new THREE.Group();
@@ -527,15 +608,12 @@ function createUnitMesh(type, team) {
 
     const frontPointer = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.16, 4), glowMat);
     frontPointer.rotation.x = Math.PI / 2;
-    frontPointer.position.set(0, 0.03, 0.50);
+    frontPointer.position.set(0, 0.035, 0.51);
     dir.add(frontPointer);
 
-    // ========================================================================
-    // A. FAKSI BIRU: HUMAN LOGISTICS CORPS (MANUSIA & KENDARAAN GUDANG)
-    // ========================================================================
+    // A. FAKSI BIRU: HUMAN LOGISTICS CORPS
     if (isBlue) {
         if (type === 'pawn') {
-            // Pion Biru: Operator Manusia Asli (.GLB) + Peti Kargo
             const human = spawnHumanCorpsGLB(0.60, 0x38bdf8, null);
             dir.add(human.wrapper);
             const crate = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.22, 0.22), mats.cardboard);
@@ -544,7 +622,6 @@ function createUnitMesh(type, team) {
             root.userData.setAnim = human.setAnim;
         }
         else if (type === 'rook') {
-            // Benteng Biru: Forklift Roda Karet + Driver Manusia
             const vehicle = new THREE.Group(); dir.add(vehicle);
             [[-0.32, 0.16, 0.24], [0.32, 0.16, 0.24], [-0.3, 0.13, -0.28], [0.3, 0.13, -0.28]].forEach(([wx, wy, wz]) => {
                 const w = new THREE.Mesh(new THREE.CylinderGeometry(wy, wy, 0.12, 20), mats.rubber);
@@ -570,7 +647,6 @@ function createUnitMesh(type, team) {
             root.userData.setAnim = driver.setAnim;
         }
         else if (type === 'knight') {
-            // Kuda Biru: Hover Pallet Cruiser + Pilot Manusia
             const speeder = new THREE.Group(); dir.add(speeder);
             const deck = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.1, 0.78), mats.blackSteel);
             deck.position.set(0, 0.14, 0); speeder.add(deck);
@@ -583,7 +659,6 @@ function createUnitMesh(type, team) {
             root.userData.setAnim = pilot.setAnim;
         }
         else if (type === 'bishop') {
-            // Gajah Biru: QC Laser Sniper Manusia
             const sniper = spawnHumanCorpsGLB(0.64, 0xffffff, 0x38bdf8);
             dir.add(sniper.wrapper);
             const laserPod = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.055, 0.58, 12), mats.blackSteel);
@@ -594,10 +669,8 @@ function createUnitMesh(type, team) {
             root.userData.setAnim = sniper.setAnim;
         }
         else if (type === 'queen') {
-            // Menteri Biru: Human Exo-Suit Commander (Manusia dengan Sayap Malaikat Mekanik Emas & Dual Pedang Plasma Biru!)
             const cmdr = spawnHumanCorpsGLB(0.72, 0xfbbf24, 0x38bdf8);
             dir.add(cmdr.wrapper);
-            // Sayap Exo-Wing Emas & Pedang Cahaya di Kiri-Kanan
             [-0.26, 0.26].forEach(wx => {
                 const wing = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.65, 0.22), mats.gold);
                 wing.position.set(wx, 0.85, -0.15); wing.rotation.z = wx * 0.6;
@@ -609,7 +682,6 @@ function createUnitMesh(type, team) {
             root.userData.setAnim = cmdr.setAnim;
         }
         else if (type === 'king') {
-            // Raja Biru: Main WMS Server Rack
             const citadel = new THREE.Group(); dir.add(citadel);
             const tower = new THREE.Mesh(new THREE.BoxGeometry(0.5, 1.05, 0.5), mats.blackSteel);
             tower.position.y = 0.55; tower.castShadow = true; citadel.add(tower);
@@ -623,33 +695,25 @@ function createUnitMesh(type, team) {
         }
     }
 
-    // ========================================================================
-    // B. FAKSI LAWAN (ORANYE/MERAH): APEX ROGUE AI MACHINES (100% BEDA BENTUK!)
-    // ========================================================================
+    // B. FAKSI LAWAN: APEX ROGUE AI MACHINES
     else {
         if (type === 'pawn') {
-            // Pion Lawan: ANDROID WORKER BOT (Robot Mekanik Bipedal .GLB - Bukan Manusia!)
             const bot = spawnRogueRobotGLB(0.18, 0xd97706, mats.neonRed);
             dir.add(bot.wrapper);
             root.userData.setAnim = bot.setAnim;
             root.userData.isMech = true;
         }
         else if (type === 'rook') {
-            // Benteng Lawan: 6-LEGGED SPIDER-TANK AGV (Tank Laba-Laba Mekanik Berkaki 6 + Capit Raksasa!)
             const spider = new THREE.Group(); dir.add(spider);
-
-            // Badan Utama Heksagonal Lapis Baja Hitam-Merah
             const thorax = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.42, 0.28, 6), mats.crimsonArmor);
             thorax.position.set(0, 0.36, 0); thorax.castShadow = true; spider.add(thorax);
 
             const dome = new THREE.Mesh(new THREE.SphereGeometry(0.26, 16, 12, 0, Math.PI*2, 0, Math.PI*0.5), mats.obsidian);
             dome.position.set(0, 0.48, 0); spider.add(dome);
 
-            // Mata Sensor Merah Menyala di Depan
             const eye = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.07, 0.1), mats.neonRed);
             eye.position.set(0, 0.46, 0.26); spider.add(eye);
 
-            // 6 Kaki Laba-Laba Mekanik Bersendi Baja
             [-1, 1].forEach(side => {
                 [-0.24, 0, 0.24].forEach(zOff => {
                     const legGrp = new THREE.Group();
@@ -663,7 +727,6 @@ function createUnitMesh(type, team) {
                 });
             });
 
-            // Sepasang Capit Penghancur Hidrolik di Depan (+Z)
             const clawPivot = new THREE.Group();
             clawPivot.position.set(0, 0.28, 0.34);
             spider.add(clawPivot);
@@ -674,27 +737,22 @@ function createUnitMesh(type, team) {
                 pincer.position.set(cx, 0, 0.16);
                 clawPivot.add(pincer);
             });
-
             root.userData.forkPivot = clawPivot;
         }
         else if (type === 'knight') {
-            // Kuda Lawan: QUADCOPTER ASSAULT DRONE (Drone Terbang 4 Baling-Baling Berputar Tanpa Pengemudi!)
             const drone = new THREE.Group();
-            drone.position.y = 0.65; // Melayang tinggi di udara!
+            drone.position.y = 0.65;
             dir.add(drone);
 
-            // Inti Fuselage Drone Siluman
             const body = new THREE.Mesh(new THREE.OctahedronGeometry(0.28, 1), mats.obsidian);
             body.scale.set(1.1, 0.55, 1.4); body.castShadow = true; drone.add(body);
 
             const scanner = new THREE.Mesh(new THREE.SphereGeometry(0.11, 12, 12), mats.neonRed);
             scanner.position.set(0, -0.04, 0.32); drone.add(scanner);
 
-            // Muatan Rudal / Bom Kargo Plasma di Bawah Perut Drone
             const payload = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.42, 12), mats.crimsonArmor);
             payload.rotation.x = Math.PI/2; payload.position.set(0, -0.18, 0); drone.add(payload);
 
-            // 4 Lengan Rotor + Baling-Baling Berputar Cepat
             [[-0.32, 0.32], [0.32, 0.32], [-0.32, -0.32], [0.32, -0.32]].forEach(([rx, rz]) => {
                 const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.45, 8), mats.blackSteel);
                 arm.rotation.z = Math.PI/2; arm.rotation.y = Math.atan2(rz, rx);
@@ -707,33 +765,23 @@ function createUnitMesh(type, team) {
                 blade.position.set(rx, 0.05, rz); drone.add(blade);
                 animatedParts.push({ mesh: blade, type: 'rotor' });
             });
-
             animatedParts.push({ mesh: drone, type: 'hover', baseY: 0.65 });
         }
         else if (type === 'bishop') {
-            // Gajah Lawan: TRIPOD RAILGUN SENTRY TURRET (Menara Meriam Laser Otomatis Berkaki 3)
             const turret = new THREE.Group(); dir.add(turret);
-
-            // 3 Kaki Tripod Kokoh
             [0, 2.09, 4.18].forEach(ang => {
                 const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.05, 0.65, 10), mats.obsidian);
                 leg.position.set(Math.sin(ang)*0.22, 0.28, Math.cos(ang)*0.22);
                 leg.rotation.z = -Math.sin(ang)*0.45; leg.rotation.x = Math.cos(ang)*0.45;
                 turret.add(leg);
             });
-
-            // Poros Tengah & Kepala Meriam Railgun Kembar
             const mount = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.2, 0.25, 16), mats.crimsonArmor);
             mount.position.y = 0.62; turret.add(mount);
 
-            const gunHead = new THREE.Group();
-            gunHead.position.y = 0.82;
-            turret.add(gunHead);
-
+            const gunHead = new THREE.Group(); gunHead.position.y = 0.82; turret.add(gunHead);
             const housing = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.24, 0.44), mats.obsidian);
             gunHead.add(housing);
 
-            // 2 Laras Railgun Panjang Menyala Merah ke Depan (+Z)
             [-0.1, 0.1].forEach(bx => {
                 const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.035, 0.72, 12), mats.chrome);
                 barrel.rotation.x = Math.PI/2; barrel.position.set(bx, 0, 0.32);
@@ -744,11 +792,8 @@ function createUnitMesh(type, team) {
             gunHead.add(coreLaser);
         }
         else if (type === 'queen') {
-            // Menteri Lawan: GOLIATH CYBER-OVERLORD MECH (Robot Raksasa Berzirah Hitam-Merah + Tanduk + Bahu Berduri!)
             const boss = spawnRogueRobotGLB(0.28, 0x991b1b, mats.neonRed);
             dir.add(boss.wrapper);
-
-            // Tambahkan Bahu Berduri & Tanduk Cyber Merah Menyala agar Jauh Lebih Gahar!
             [-0.32, 0.32].forEach(sx => {
                 const pauldron = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.42, 5), mats.crimsonArmor);
                 pauldron.position.set(sx, 0.95, 0); pauldron.rotation.z = sx * -0.6;
@@ -762,24 +807,19 @@ function createUnitMesh(type, team) {
             root.userData.isMech = true;
         }
         else if (type === 'king') {
-            // Raja Lawan: ROGUE AI SINGULARITY CORE (Bola Energi Reaktor Melayang + 3 Cincin Gyroscope Berputar!)
             const nexus = new THREE.Group(); dir.add(nexus);
-
             const ped = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.45, 0.2, 8), mats.obsidian);
             ped.position.y = 0.1; nexus.add(ped);
 
-            // 3 Pilar Konduktor Melengkung
             [0, 2.09, 4.18].forEach(a => {
                 const pylon = new THREE.Mesh(new THREE.BoxGeometry(0.07, 1.1, 0.12), mats.crimsonArmor);
                 pylon.position.set(Math.sin(a)*0.34, 0.6, Math.cos(a)*0.34);
                 nexus.add(pylon);
             });
 
-            // Bola Inti Otak AI Merah Menyala
             const aiBrain = new THREE.Mesh(new THREE.IcosahedronGeometry(0.24, 2), mats.neonRed);
             aiBrain.position.y = 0.78; nexus.add(aiBrain);
 
-            // 2 Cincin Gyroscope Emas & Hitam Berputar Silang
             const gyro1 = new THREE.Mesh(new THREE.TorusGeometry(0.36, 0.022, 10, 32), mats.neonAmber);
             gyro1.position.y = 0.78; nexus.add(gyro1);
             const gyro2 = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.018, 10, 32), mats.chrome);
@@ -896,7 +936,6 @@ function spawnImpactFX(pos, colorHex = 0x38bdf8, scaleMul = 1.0) {
     }
 }
 
-// KOREOGRAFI DUEL 5 BABAK: MANUSIA VS MESIN OTOMASI
 function playEpicCombatSequence(attacker, defender, targetX, targetZ, onComplete) {
     document.body.classList.add('combat-mode');
 
@@ -919,14 +958,13 @@ function playEpicCombatSequence(attacker, defender, targetX, targetZ, onComplete
     faceUnitTowards(defender, startX, startZ);
 
     duelLight.position.set(midX, 3.5, midZ);
-    duelLight.intensity = 2.5;
+    duelLight.intensity = 2.2;
 
     showCombatBanner("⚔️ MANUSIA VS MESIN!", 800);
 
     if (attacker.userData.setAnim) attacker.userData.setAnim('Run', 1.3);
     if (defender.userData.setAnim) defender.userData.setAnim('Walk', 0.8);
 
-    // BABAK 1: SPRINT RUN-IN
     let p1 = 0;
     const stage1Approach = () => {
         p1 += 0.028;
@@ -947,7 +985,6 @@ function playEpicCombatSequence(attacker, defender, targetX, targetZ, onComplete
         }
     };
 
-    // BABAK 2: SERANGAN PEMBUKA & COUNTER-ATTACK LAWAN
     let p2 = 0, hit1Done = false, counterDone = false;
     const stage2ClashAndCounter = () => {
         p2 += 0.022;
@@ -992,7 +1029,6 @@ function playEpicCombatSequence(attacker, defender, targetX, targetZ, onComplete
         }
     };
 
-    // BABAK 3: RENTETAN KOMBO CEPAT
     let p3 = 0, comboHits = 1, laserMesh = null;
     if (attacker.userData.type === 'bishop') {
         laserMesh = new THREE.Mesh(
@@ -1040,7 +1076,6 @@ function playEpicCombatSequence(attacker, defender, targetX, targetZ, onComplete
         }
     };
 
-    // BABAK 4: SLOW-MOTION AERIAL FINISHER
     let p4 = 0;
     const stage4UltimateFinisher = () => {
         const speed = (p4 > 0.35 && p4 < 0.7) ? 0.014 : 0.032;
@@ -1066,7 +1101,6 @@ function playEpicCombatSequence(attacker, defender, targetX, targetZ, onComplete
         }
     };
 
-    // BABAK 5: RAGDOLL LAUNCH
     let p5 = 0;
     if (attacker.userData.isMech && attacker.userData.setAnim) attacker.userData.setAnim('Wave', 1.2);
     else if (attacker.userData.setAnim) attacker.userData.setAnim('Idle', 1.0);
@@ -1158,7 +1192,7 @@ function showHighlights(moves) {
     moves.forEach(m => {
         const mk = new THREE.Mesh(
             new THREE.PlaneGeometry(tileSize * 0.84, tileSize * 0.84),
-            new THREE.MeshBasicMaterial({ color: m.attack ? 0xef4444 : 0x22c55e, transparent: true, opacity: 0.5, side: THREE.DoubleSide })
+            new THREE.MeshBasicMaterial({ color: m.attack ? 0xef4444 : 0x22c55e, transparent: true, opacity: 0.55, side: THREE.DoubleSide })
         );
         mk.rotation.x = -Math.PI/2; mk.position.set(m.x * tileSize - offset, 0.065, m.z * tileSize - offset);
         scene.add(mk); highlights.push(mk);
@@ -1268,8 +1302,8 @@ function resetGame() {
         spawnUnit('pawn', 'blue', i, 6); spawnUnit(row[i], 'blue', i, 7);
     }
     updateScoreUI();
-    addBattleLog("Faksi Manusia vs Rogue AI Siap.");
-    updateHUD("Klik tombol '👁️ Zoom Faksi Lawan (Robot)' untuk melihat bentuk Spider-Tank, Quadcopter & Android Lawan!");
+    addBattleLog("Developed by iqbalmantam • Engine Ready.");
+    updateHUD("Warehouse Command 3D • Developed by iqbalmantam. Klik bidak Biru atau '🔥 Duel Manusia vs Robot!'");
 }
 
 function updateHUD(msg) {
@@ -1288,7 +1322,6 @@ function toggleAI() {
 
 function setCameraView(mode) {
     if (mode === 'enemy') {
-        // Zoom langsung ke barisan Faksi Lawan (Robot/Spider-Tank/Quadcopter)
         camera.position.set(0, 3.2, -0.5); controls.target.set(0, 0.6, -3.6);
     } else {
         camera.position.set(0, 10.6, 13.4); controls.target.set(0, 0.6, 0);
